@@ -3,13 +3,13 @@ import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import SignUpScreen from './SignUp';
-import LoginScreen from './Login';  // 👉 import trang mới
-import ShopScreen from './App1';   // 👉 import trang mới
-import AdminScreen from './AdminScreen';
-import SellerScreen from './SellerScreen';
-import CustomerScreen from './CustomerScreen';
-import MyOrdersScreen from './MyOrderScreen';
+import SignUpScreen from './src/screens/SignUp';  // 👉 import trang mới
+import LoginScreen from './src/screens/Login';  // 👉 import trang mới
+
+import AdminScreen from './src/screens/AdminScreen';
+import SellerScreen from './src/screens/SellerScreen';
+import CustomerScreen from './src/screens/CustomerScreen';
+import MyOrdersScreen from './src/screens/MyOrderScreen';
 
 type RootStackParamList = {
   Home: undefined;

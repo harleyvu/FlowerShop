@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_BASE_URL } from './APIconfig';
+import { orderService } from '../services/orderService';
 
 interface OrderItem {
   flowerId: number;
@@ -76,22 +76,17 @@ export default function MyOrdersScreen({ navigation }: any) {
     if (!userData) return;
 
     const fetchOrders = async () => {
-      try {
-        const token = userData.token;
-        const userId = userData.user.id;
-
-        const response = await fetch(`${API_BASE_URL}/Order?userId=${userId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const data = await response.json();
-        setOrders(data);
-      } catch (error) {
-        console.error('❌ Error fetching orders:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  try {
+    const token = userData.token;
+    const userId = userData.user.id;
+    const data = await orderService.getOrders(userId, token);
+    setOrders(data);
+  } catch (error) {
+    console.error("❌ Error fetching orders:", error);
+  } finally {
+    setLoading(false);
+  }
+};
 
     fetchOrders();
   }, [userData]);
@@ -120,23 +115,16 @@ export default function MyOrdersScreen({ navigation }: any) {
 
   // Xóa order qua API
   const deleteOrder = async (orderId: number) => {
-    try {
-      const token = userData.token;
-      const response = await fetch(`${API_BASE_URL}/Order/${orderId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (response.ok) {
-        setOrders(prev => prev.filter(o => o.id !== orderId));
-        Alert.alert('Deleted', `Order #${orderId} has been deleted.`);
-      } else {
-        Alert.alert('Error', 'Failed to delete order.');
-      }
-    } catch (error) {
-      console.error('❌ Delete order error:', error);
-      Alert.alert('Error', 'Failed to delete order.');
-    }
-  };
+  try {
+    const token = userData.token;
+    await orderService.deleteOrder(orderId, token);
+    setOrders(prev => prev.filter(o => o.id !== orderId));
+    Alert.alert("Deleted", `Order #${orderId} has been deleted.`);
+  } catch (error) {
+    console.error("❌ Delete order error:", error);
+    Alert.alert("Error", "Failed to delete order.");
+  }
+};
 
   const renderOrder = ({ item }: { item: Order }) => (
     <View style={styles.orderCard}>

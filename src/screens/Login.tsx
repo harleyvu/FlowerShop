@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -10,70 +10,64 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-} from 'react-native';
-import { API_BASE_URL } from './APIconfig';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { userService } from "../services/userService";
 
 export default function LoginScreen({ navigation }: any) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please enter email and password');
+      Alert.alert("Error", "Please enter email and password");
       return;
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/User/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+      const data = await userService.login({ email, password });
+      console.log("📥 Login response:", data);
 
-      const data = await response.json();
-      console.log('📥 Login response:', data);
-
-      if (response.ok && data.success) {
+      if (data.success) {
         const userData = JSON.stringify(data.data);
-        await AsyncStorage.setItem('userData', userData);
-        console.log('💾 User data saved to AsyncStorage');
+        await AsyncStorage.setItem("userData", userData);
+        console.log("💾 User data saved to AsyncStorage");
+
         const role = data.data?.user?.role;
         const token = data.data?.token;
         const userId = data.data?.user?.id;
-        console.log('👤 User role:', role);
 
-        let targetScreen = 'Customer';
-        if (role === 1) targetScreen = 'Admin';
-        else if (role === 2) targetScreen = 'Seller';
-        else targetScreen = 'Customer';
+        let targetScreen = "Customer";
+        if (role === 1) targetScreen = "Admin";
+        else if (role === 2) targetScreen = "Seller";
 
-        Alert.alert('✅ Success', 'Login successful!', [
-          { text: 'Continue', onPress: () => navigation.replace(targetScreen ,{
-            userId: userId,
-            token: token,
-          }) },
+        Alert.alert("✅ Success", "Login successful!", [
+          {
+            text: "Continue",
+            onPress: () =>
+              navigation.replace(targetScreen, {
+                userId,
+                token,
+              }),
+          },
         ]);
       } else {
-        Alert.alert('❌ Error', data.message || 'Login failed');
+        Alert.alert("❌ Error", data.message || "Login failed");
       }
     } catch (error) {
-      console.error('⚠️ Login error:', error);
-      Alert.alert('Error', 'Cannot connect to server');
+      Alert.alert("Error", "Cannot connect to server");
     }
   };
-  
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       style={styles.container}
     >
       <ScrollView contentContainerStyle={styles.scroll}>
         <Image
           source={{
-            uri: 'https://springflowers.store/cdn/shop/files/SPRING_LOGO.png?v=1707224320',
+            uri: "https://springflowers.store/cdn/shop/files/SPRING_LOGO.png?v=1707224320",
           }}
           style={styles.logo}
           resizeMode="contain"
@@ -81,7 +75,9 @@ export default function LoginScreen({ navigation }: any) {
 
         <View style={styles.box}>
           <Text style={styles.title}>Welcome Back 🌸</Text>
-          <Text style={styles.subtitle}>Log in to continue your floral journey</Text>
+          <Text style={styles.subtitle}>
+            Log in to continue your floral journey
+          </Text>
 
           <TextInput
             style={styles.input}
@@ -106,7 +102,9 @@ export default function LoginScreen({ navigation }: any) {
             <Text style={styles.btnText}>Log In</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => Alert.alert('Feature coming soon!')}>
+          <TouchableOpacity
+            onPress={() => Alert.alert("Feature coming soon!")}
+          >
             <Text style={styles.link}>Forgot your password?</Text>
           </TouchableOpacity>
         </View>
@@ -120,12 +118,12 @@ export default function LoginScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF7FA', // màu nền hồng nhạt nhẹ
+    backgroundColor: "#FFF7FA",
   },
   scroll: {
     flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 24,
   },
   logo: {
@@ -134,12 +132,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   box: {
-    width: '100%',
-    backgroundColor: '#FFFFFF',
+    width: "100%",
+    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     padding: 25,
-    alignItems: 'center',
-    shadowColor: '#FFB6C1',
+    alignItems: "center",
+    shadowColor: "#FFB6C1",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25,
     shadowRadius: 10,
@@ -147,46 +145,46 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FF69B4',
+    fontWeight: "bold",
+    color: "#FF69B4",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: '#888',
+    color: "#888",
     marginBottom: 20,
   },
   input: {
-    width: '100%',
-    backgroundColor: '#FFF0F5',
+    width: "100%",
+    backgroundColor: "#FFF0F5",
     borderRadius: 12,
     padding: 14,
     marginBottom: 15,
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
   loginBtn: {
-    width: '100%',
-    backgroundColor: '#FF69B4',
+    width: "100%",
+    backgroundColor: "#FF69B4",
     padding: 14,
     borderRadius: 25,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 10,
   },
   btnText: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: 'white',
+    fontWeight: "bold",
+    color: "white",
   },
   link: {
     marginTop: 15,
-    color: '#FF69B4',
+    color: "#FF69B4",
     fontSize: 14,
-    textDecorationLine: 'underline',
+    textDecorationLine: "underline",
   },
   footer: {
     marginTop: 40,
     fontSize: 12,
-    color: '#999',
+    color: "#999",
   },
 });

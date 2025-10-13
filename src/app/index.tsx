@@ -1,9 +1,10 @@
 import { Link } from "expo-router";
 import React from "react";
-import { ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const bg = require("../assets/background.png");
+const logo = require("../assets/logo.png"); // <-- gắn logo ở đây
 
 const WelcomePage = () => {
   return (
@@ -13,7 +14,8 @@ const WelcomePage = () => {
 
         <View style={styles.center}>
           <Text style={styles.small}>Welcome to</Text>
-          <Text style={styles.title}>Flowerfly!</Text>
+          {/* thay text bằng hình logo */}
+          <Image source={logo} style={styles.logoImage} />
           <Text style={styles.subtitle}>Join us</Text>
         </View>
 
@@ -55,11 +57,12 @@ const styles = StyleSheet.create({
     color: "#2b2b2b",
     marginBottom: 8,
   },
-  title: {
-    fontSize: 48,
-    color: "#1f7a4c", // xanh lá giống ảnh
-    fontWeight: "700",
-    // nếu dùng font chữ script, đặt fontFamily ở đây (nhớ load font)
+  // style cho logo image
+  logoImage: {
+    width: 220,
+    height: 64,
+    resizeMode: "contain",
+    marginVertical: 8,
   },
   subtitle: {
     marginTop: 12,

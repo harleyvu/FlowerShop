@@ -1,26 +1,35 @@
+import { useFonts } from "expo-font";
 import { Link } from "expo-router";
 import React, { useState } from "react";
 import {
-    ImageBackground,
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
-const bg = require("../../assets/background.png"); // <-- same background
+/* BACKGROUND */
+const bg = require("../../assets/background.png");
+/* FONT: Pacifico-Regular.ttf placed at src/assets/fonts/Pacifico-Regular.ttf */
+const pacificoFont = require("../../assets/fonts/Pacifico-Regular.ttf");
 
 export default function SignUp() {
+  const [fontsLoaded] = useFonts({ Pacifico: pacificoFont });
+
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+
+  if (!fontsLoaded) return <ActivityIndicator style={{ flex: 1 }} />;
 
   return (
     <ImageBackground source={bg} style={styles.bg} resizeMode="cover">
@@ -30,7 +39,8 @@ export default function SignUp() {
           style={styles.container}
         >
           <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-            <Text style={styles.logo}>Flowerfly</Text>
+            {/* Title using custom Pacifico font */}
+            <Text style={styles.logoText}>Flowerfly</Text>
 
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Sign Up</Text>
@@ -79,26 +89,22 @@ export default function SignUp() {
                 secureTextEntry
               />
 
-              {/* Primary sign up button */}
               <TouchableOpacity style={styles.primaryButton} activeOpacity={0.85}>
                 <Text style={styles.primaryButtonText}>Sign up</Text>
               </TouchableOpacity>
 
-              {/* OR separator */}
               <View style={styles.orWrap}>
                 <View style={styles.line} />
                 <Text style={styles.orText}>OR</Text>
                 <View style={styles.line} />
               </View>
 
-              {/* Continue as guest */}
               <Link href=".." asChild>
                 <TouchableOpacity style={styles.ghostButton} activeOpacity={0.85}>
                   <Text style={styles.ghostText}>Continue as a guest</Text>
                 </TouchableOpacity>
               </Link>
 
-              {/* Already have account -> go to login */}
               <View style={styles.signupWrap}>
                 <Text style={styles.smallText}>Already have account ? </Text>
                 <Link href="login" style={styles.signUpLink}>
@@ -124,7 +130,12 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 40,
   },
-  logo: { fontSize: 36, color: "#1f7a4c", fontWeight: "700", marginBottom: 12 },
+  logoText: {
+    fontSize: 36,
+    color: "#1f7a4c",
+    marginBottom: 12,
+    fontFamily: "Pacifico", // <-- custom font applied here
+  },
   card: {
     width: "100%",
     maxWidth: 420,

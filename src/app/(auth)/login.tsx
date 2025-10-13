@@ -1,20 +1,25 @@
+import { useFonts } from "expo-font";
 import { Link } from "expo-router";
 import React, { useState } from "react";
 import {
-    ImageBackground,
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 /* BACKGROUND: nếu đã có ảnh ở src/assets/background.png -> require đường dẫn tương đối */
 const bg = require("../../assets/background.png"); // <-- gắn background ở đây
+
+/* FONT: Pacifico-Regular.ttf placed at src/assets/fonts/Pacifico-Regular.ttf */
+const pacificoFont = require("../../assets/fonts/Pacifico-Regular.ttf");
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -28,7 +33,12 @@ export default function Login() {
           style={styles.container}
         >
           <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-            <Text style={styles.logo}>Flowerfly</Text>
+            {/* logo image */}
+            {(() => {
+              const [fontsLoaded] = useFonts({ Pacifico: pacificoFont });
+              if (!fontsLoaded) return <ActivityIndicator style={{ marginBottom: 12 }} />;
+              return <Text style={styles.logoText}>Flowerfly</Text>;
+            })()}
 
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Log in</Text>
@@ -108,11 +118,11 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 40,
   },
-  logo: {
+  logoText: {
     fontSize: 36,
     color: "#1f7a4c",
-    fontWeight: "700",
     marginBottom: 12,
+    fontFamily: "Pacifico",
   },
   card: {
     width: "100%",

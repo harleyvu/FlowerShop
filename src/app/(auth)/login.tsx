@@ -1,6 +1,9 @@
 import { useFonts } from "expo-font";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import React, { useState } from "react";
+import { handleLogin } from "../../controllers/userController";
+import { Alert } from "react-native";
+
 import {
   ActivityIndicator,
   ImageBackground,
@@ -22,8 +25,30 @@ const bg = require("../../assets/background.png"); // <-- gắn background ở �
 const pacificoFont = require("../../assets/fonts/Pacifico-Regular.ttf");
 
 export default function Login() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  
+const [loading, setLoading] = useState(false);
+
+const onLogin = async () => {
+  if (!email || !password) {
+    Alert.alert("Missing info", "Please enter email and password");
+    return;
+  }
+  try {
+    setLoading(true);
+    const res = await handleLogin(email, password);
+    Alert.alert("Success", "Welcome back!");
+    router.replace("/(tabs)/home"); // chuyển vào Home
+  } catch (err: any) {
+    Alert.alert("Login failed", err.message || "Unable to login");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   return (
     <ImageBackground source={bg} style={styles.bg} resizeMode="cover">
@@ -69,11 +94,20 @@ export default function Login() {
               </TouchableOpacity>
 
               {/* NAVIGATE to signup when pressing this button */}
-              <Link href="signup" asChild>
-                <TouchableOpacity style={styles.primaryButton} activeOpacity={0.85}>
-                  <Text style={styles.primaryButtonText}>Log in</Text>
-                </TouchableOpacity>
-              </Link>
+              <TouchableOpacity
+  style={styles.primaryButton}
+  activeOpacity={0.85}
+  onPress={onLogin}
+  disabled={loading}
+>
+  {loading ? (
+    <ActivityIndicator color="#fff" />
+  ) : (
+    <Text style={styles.primaryButtonText}>Log in</Text>
+  )}
+</TouchableOpacity>
+
+
 
               {/* Bỏ phần social buttons theo yêu cầu */}
 
@@ -83,11 +117,15 @@ export default function Login() {
                 <View style={styles.line} />
               </View>
 
-              <Link href=".." asChild>
-                <TouchableOpacity style={styles.ghostButton} activeOpacity={0.85}>
-                  <Text style={styles.ghostText}>Continue as a guest</Text>
-                </TouchableOpacity>
-              </Link>
+              <TouchableOpacity
+  style={styles.ghostButton}
+  activeOpacity={0.85}
+  onPress={() => router.replace("/(tabs)/home")}
+>
+  <Text style={styles.ghostText}>Continue as a guest</Text>
+</TouchableOpacity>
+
+
 
               <View style={styles.signupWrap}>
                 <Text style={styles.smallText}>Don't have an account ? </Text>

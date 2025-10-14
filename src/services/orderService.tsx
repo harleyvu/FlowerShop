@@ -23,6 +23,14 @@ export const orderService = {
     return await res.json();
   },
 
+  async getAllOrders(token: string) {
+    const res = await fetch(`${API_BASE_URL}/Order`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Failed to fetch all orders");
+    return await res.json();
+  },
+
   // 🔹 Xóa đơn hàng
   async deleteOrder(orderId: number, token: string) {
     const res = await fetch(`${API_BASE_URL}/Order/${orderId}`, {

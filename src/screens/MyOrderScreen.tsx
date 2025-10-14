@@ -98,7 +98,7 @@ export default function MyOrdersScreen({ navigation }: any) {
 
   // Navigate to PaymentScreen với toàn bộ order
   const goToPayment = (order: Order) => {
-    navigation.navigate('PaymentScreen', { order });
+    navigation.navigate('Payment', { order });
   };
 
   // Xác nhận xóa order

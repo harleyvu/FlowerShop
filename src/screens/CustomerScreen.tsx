@@ -37,6 +37,33 @@ export default function CustomerScreen({ navigation }: any) {
   const [chatMessages, setChatMessages] = useState<{ sender: "user" | "ai"; text: string }[]>([]);
   const scrollRef = useRef<ScrollView>(null);
 
+  // 🌸 Group by category
+  const categoryNames: Record<number, string> = {
+    1: "Roses 🌹",
+    2: "Tulips 🌷",
+    3: "Daisies 🌼",
+    4: "Lilies 🌸",
+    5: "Orchids 🌺",
+    6: "Sunflowers 🌻",
+    7: "Carnations 💐",
+    8: "Mixed Bouquets 💞",
+  };
+
+  const grouped = flowers.reduce((acc: Record<number, Flower[]>, f) => {
+    if (!acc[f.category]) acc[f.category] = [];
+    acc[f.category].push(f);
+    return acc;
+  }, {});
+
+  const [expanded, setExpanded] = useState<number[]>([]);
+
+  const toggleCategory = (catId: number) => {
+    setExpanded(prev =>
+      prev.includes(catId) ? prev.filter(c => c !== catId) : [...prev, catId]
+    );
+  };
+
+
   // Load user
   useEffect(() => {
     (async () => {
@@ -120,14 +147,46 @@ export default function CustomerScreen({ navigation }: any) {
         <TouchableOpacity onPress={() => setMenuVisible(true)}><Text style={styles.menuIcon}>☰</Text></TouchableOpacity>
       </View>
 
-      <FlatList data={flowers} renderItem={({ item }) => (
-        <View style={styles.card}>
-          <Image source={{ uri: item.imageUrl }} style={styles.image} />
-          <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.price}>{item.price} VND</Text>
-          <TouchableOpacity onPress={() => handleAddToCart(item)} style={styles.addBtn}><Text style={{ color: "#fff" }}>+ Add</Text></TouchableOpacity>
-        </View>
-      )} numColumns={2} keyExtractor={i => i.id.toString()} />
+      <ScrollView>
+  {Object.entries(grouped).map(([catId, items]) => {
+    const isOpen = expanded.includes(Number(catId));
+    return (
+      <View key={catId} style={styles.categorySection}>
+        {/* Header */}
+        <TouchableOpacity
+          onPress={() => toggleCategory(Number(catId))}
+          style={styles.categoryHeader}
+        >
+          <Text style={styles.categoryTitle}>
+            {categoryNames[Number(catId)] || `Category ${catId}`}
+          </Text>
+          <Text style={styles.expandIcon}>{isOpen ? "▲" : "▼"}</Text>
+        </TouchableOpacity>
+
+        {/* Grid items */}
+        {isOpen && (
+          <View style={styles.flowerGrid}>
+            {items.map((item) => (
+              <View key={item.id} style={styles.cardBox}>
+                <Image source={{ uri: item.imageUrl }} style={styles.imageBox} />
+                <Text style={styles.name}>{item.name}</Text>
+                <Text style={styles.price}>{item.price} VND</Text>
+                <TouchableOpacity
+                  onPress={() => handleAddToCart(item)}
+                  style={styles.addBtn}
+                >
+                  <Text style={{ color: "#fff" }}>+ Add</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+    );
+  })}
+</ScrollView>
+
+
 
       {/* Menu Modal */}
       <Modal transparent visible={menuVisible} animationType="fade">
@@ -227,4 +286,52 @@ const styles = StyleSheet.create({
   cartTotal: { fontSize: 16, fontWeight: 'bold', color: '#E91E63', marginTop: 10 },
   orderText: { color: '#FFF', fontWeight: 'bold' },
   closeText: { color: '#888', marginTop: 10 },
+  
+  categorySection: {
+  marginBottom: 12,
+  backgroundColor: "#fff",
+  borderRadius: 10,
+  overflow: "hidden",
+  elevation: 2,
+},
+  categoryHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    backgroundColor: "#FFE4EC",
+  },
+  categoryTitle: { fontWeight: "bold", color: "#C2185B", fontSize: 16 },
+  expandIcon: { fontSize: 16, color: "#C2185B" },
+
+  // ✅ Grid hiển thị item
+  flowerGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap", // cho phép xuống dòng
+    justifyContent: "space-between",
+    paddingHorizontal: 8,
+    paddingBottom: 10,
+  },
+
+  // ✅ Box mỗi bông hoa
+  cardBox: {
+    width: "47%", // hai item trên 1 hàng
+    backgroundColor: "#FFF7FA",
+    borderRadius: 10,
+    padding: 8,
+    marginTop: 8,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 2,
+    elevation: 2,
+  },
+
+  imageBox: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+  },
+
 });

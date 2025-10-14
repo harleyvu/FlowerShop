@@ -5,11 +5,11 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SignUpScreen from './src/screens/SignUp';  // 👉 import trang mới
 import LoginScreen from './src/screens/Login';  // 👉 import trang mới
-
 import AdminScreen from './src/screens/AdminScreen';
 import SellerScreen from './src/screens/SellerScreen';
 import CustomerScreen from './src/screens/CustomerScreen';
 import MyOrdersScreen from './src/screens/MyOrderScreen';
+import PaymentScreen from './src/screens/PaymentScreen';
 
 type RootStackParamList = {
   Home: undefined;
@@ -19,6 +19,7 @@ type RootStackParamList = {
   Seller: undefined;
   Customer: undefined;
   MyOrders: undefined;
+  Payment: { order: any };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -65,7 +66,7 @@ export default function App() {
         <Stack.Screen name="Seller" component={SellerScreen} />
         <Stack.Screen name="Customer" component={CustomerScreen} />
         <Stack.Screen name="MyOrders" component={MyOrdersScreen} />
-
+        <Stack.Screen name="Payment" component={PaymentScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -1,6 +1,7 @@
-import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
 import { Platform } from "react-native";
+import { Flower } from "../types/flower";
 
 /**
  * CHỌN BASE URL:
@@ -46,3 +47,9 @@ apiClient.interceptors.request.use(async (config) => {
   }
   return config;
 });
+
+// Lấy danh sách hoa từ http://<baseURL>/api/Flower
+export async function getFlowers(signal?: AbortSignal): Promise<Flower[]> {
+  const res = await apiClient.get<Flower[]>("/api/Flower", { signal });
+  return res.data;
+}

@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import { useRouter } from "expo-router";
+import React, { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Image,
   StyleSheet,
@@ -10,10 +12,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import ProductCard from "../../components/ProductCard";
-import type { Product } from "../../types/flowers";
+import { getFlowers } from "../../api/apiClient";
+import { Flower } from "../../types/flower";
 
-// COLORS giống home.tsx
 const COLORS = {
   primary: "#27c16b",
   dark: "#1f7a4c",
@@ -24,18 +25,50 @@ const COLORS = {
   border: "#e6eee9",
 };
 
-// Dữ liệu giả
-const PRODUCTS: Product[] = [
-  { id: 1, name: "Bouquet 'Autumn'", price: 150, image: "https://i.pinimg.com/564x/2b/36/19/2b361932f6833c3a3c93b83322b76716.jpg", typeId: 1, colorKey: "RED" },
-  { id: 2, name: "Spring Delight", price: 120, image: "https://i.pinimg.com/564x/9a/a6/5c/9aa65c60345a9935129b1a44919a1b7c.jpg", typeId: 2, colorKey: "PINK" },
-  { id: 3, name: "Sunny Morning", price: 90, image: "https://i.pinimg.com/564x/5a/8c/f1/5a8cf1ecb6a85bad733a0c17a12371dc.jpg", typeId: 6 },
-  { id: 4, name: "Purple Rain", price: 200, image: "https://i.pinimg.com/564x/b8/a2/32/b8a23245bab6f842a27a7a6277187c4b.jpg", typeId: 5 },
-  { id: 5, name: "Winter Kiss", price: 180, image: "https://i.pinimg.com/564x/8e/71/41/8e71412280b239a31c52223a233d2a2f.jpg", typeId: 8 },
-  { id: 6, name: "Golden Fields", price: 95, image: "https://i.pinimg.com/564x/f0/b4/2c/f0b42c39334549962f3a0298953d54a2.jpg", typeId: 3, colorKey: "YELLOW" },
-];
-
 export default function ShopScreen() {
+  const [data, setData] = useState<Flower[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState("");
+  const router = useRouter();
+
+  const load = async (signal?: AbortSignal) => {
+    try {
+      setError(null);
+      setLoading(true);
+      const flowers = await getFlowers(signal);
+      setData(flowers);
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to load products");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const ac = new AbortController();
+    load(ac.signal);
+    return () => ac.abort();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.center}>
+        <Text style={{ color: "crimson", marginBottom: 12 }}>{error}</Text>
+        <TouchableOpacity style={styles.retryBtn} onPress={() => load()}>
+          <Text style={styles.retryText}>Thử lại</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -75,14 +108,67 @@ export default function ShopScreen() {
 
       {/* Product Grid */}
       <FlatList
-        data={PRODUCTS}
-        renderItem={({ item }) => <ProductCard product={item} />}
-        keyExtractor={(item) => String(item.id)}
+        data={data}
+        keyExtractor={(it) => String(it.id)}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() =>
+              router.push({
+                pathname: "/product/[id]",
+                params: {
+                  id: String(item.id),
+                  name: item.name ?? "",
+                  description: item.description ?? "",
+                  price: String(item.price ?? 0),
+                  imageUrl: item.imageUrl ?? "",
+                },
+              })
+            }
+            style={{ flex: 1 }}
+          >
+            <ProductCard item={item} />
+          </TouchableOpacity>
+        )}
         numColumns={2}
-        contentContainerStyle={styles.gridContainer}
+        columnWrapperStyle={{ gap: 8 }}
+        contentContainerStyle={{ padding: 12, gap: 8 }}
         showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>
+  );
+}
+
+function ProductCard({ item }: { item: Flower }) {
+  const priceText = useMemo(
+    () => `${item.price.toLocaleString("vi-VN")} đ`,
+    [item.price]
+  );
+
+  const validImage = item.imageUrl?.startsWith("http");
+
+  return (
+    <View style={styles.card}>
+      {validImage ? (
+        <Image source={{ uri: item.imageUrl }} style={styles.image} />
+      ) : (
+        <View style={[styles.image, styles.imagePlaceholder]}>
+          <Text style={{ color: COLORS.sub, fontSize: 12 }}>No image</Text>
+        </View>
+      )}
+      <View style={{ padding: 10 }}>
+        <Text style={styles.name} numberOfLines={1}>
+          {item.name}
+        </Text>
+        <Text style={styles.desc} numberOfLines={1}>
+          {item.description}
+        </Text>
+        <Text style={styles.price}>{priceText}</Text>
+        <TouchableOpacity style={styles.addBtn} onPress={() => {}}>
+          <Text style={styles.addText}>Add to cart</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
@@ -151,5 +237,37 @@ const styles = StyleSheet.create({
     tintColor: COLORS.card,
   },
 
-  gridContainer: { paddingHorizontal: 8 },
+  center: { flex: 1, alignItems: "center", justifyContent: "center" },
+  retryBtn: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  retryText: { color: "#fff", fontWeight: "600" },
+  card: {
+    flex: 1,
+    backgroundColor: COLORS.card,
+    borderRadius: 16,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  image: { width: "100%", height: 120 },
+  imagePlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#f0f4f2",
+  },
+  name: { color: COLORS.text, fontWeight: "700", fontSize: 14 },
+  desc: { color: COLORS.sub, fontSize: 12, marginTop: 2 },
+  price: { color: COLORS.dark, fontWeight: "800", marginTop: 8 },
+  addBtn: {
+    marginTop: 10,
+    backgroundColor: COLORS.primary,
+    paddingVertical: 8,
+    borderRadius: 20,
+    alignItems: "center",
+  },
+  addText: { color: "#fff", fontWeight: "700" },
 });

@@ -2,6 +2,7 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
+import { CartProvider } from "../contexts/CartContext";
 
 // Giữ màn hình chờ (splash screen) hiển thị, không để nó tự ẩn
 SplashScreen.preventAutoHideAsync();
@@ -26,5 +27,9 @@ export default function RootLayout() {
   }
 
   // Khi font đã sẵn sàng, hiển thị ứng dụng
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <CartProvider>
+      <Stack screenOptions={{ headerShown: false }} />
+    </CartProvider>
+  );
 }

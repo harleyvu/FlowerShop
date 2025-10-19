@@ -9,6 +9,7 @@ const ICONS = {
   home: require('../../assets/home.png'),
   shop: require('../../assets/shop.png'),
   favorites: require('../../assets/favorites.png'),
+  orders: require('../../assets/shop.png'),
   cart: require('../../assets/cart.png'),
   account: require('../../assets/account.png'),
 };
@@ -59,6 +60,13 @@ export default function TabLayout() {
         options={{
           title: 'Favorites',
           tabBarIcon: ({ focused }) => <TabBarIcon name="favorites" focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="orders"
+        options={{
+          title: 'Orders',
+          tabBarIcon: ({ focused }) => <TabBarIcon name="orders" focused={focused} />,
         }}
       />
       <Tabs.Screen

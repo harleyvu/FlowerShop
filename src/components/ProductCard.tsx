@@ -1,16 +1,28 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useState } from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { Product } from '../types/flowers';
+import { useCart } from '../contexts/CartContext';
 
 type ProductCardProps = {
-  product: Product;
+  product: any;
 };
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const { addToCart } = useCart();
+  const [qty, setQty] = useState(1);
+
+  const imageUri = product.image || product.imageUrl || product.photo || '';
+  const price = product.price ?? product.cost ?? 0;
+  const pid = String(product.id ?? product.productId ?? '');
+
+  function handleAdd() {
+    addToCart({ productId: pid, name: product.name, price }, qty);
+    setQty(1);
+  }
+
   return (
     <View style={styles.card}>
-      <Image source={{ uri: product.image }} style={styles.image} />
+      {imageUri ? <Image source={{ uri: imageUri }} style={styles.image} /> : null}
       <TouchableOpacity style={styles.favoriteButton}>
         <Ionicons name="heart-outline" size={20} color="#1f7a4c" />
       </TouchableOpacity>
@@ -21,11 +33,24 @@ export default function ProductCard({ product }: ProductCardProps) {
           <Text style={styles.ratingText}>4.89</Text>
         </View>
         <Text style={styles.name} numberOfLines={1}>{product.name}</Text>
-        <Text style={styles.price}>$ {product.price}</Text>
-        <TouchableOpacity style={styles.addButton}>
-          <Text style={styles.addButtonText}>Add to cart</Text>
-          <Ionicons name="cart-outline" size={16} color="#fff" />
-        </TouchableOpacity>
+        <Text style={styles.price}>$ {price}</Text>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
+          <TouchableOpacity style={styles.counterBtn} onPress={() => setQty(q => Math.max(1, q - 1))}>
+            <Text style={styles.counterText}>-</Text>
+          </TouchableOpacity>
+          <Text style={{ marginHorizontal: 8 }}>{qty}</Text>
+          <TouchableOpacity style={styles.counterBtn} onPress={() => setQty(q => q + 1)}>
+            <Text style={styles.counterText}>+</Text>
+          </TouchableOpacity>
+
+          <View style={{ width: 12 }} />
+
+          <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
+            <Text style={styles.addButtonText}>Add to cart</Text>
+            <Ionicons name="cart-outline" size={16} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -94,5 +119,15 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     marginRight: 6,
+  },
+  counterBtn: {
+    backgroundColor: '#eee',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  counterText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

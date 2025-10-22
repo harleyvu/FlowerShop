@@ -13,6 +13,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getFlowers } from "../../api/apiClient";
+import AIChatBubble from '../../components/AIChatBubble';
+import { useCart } from "../../contexts/CartContext";
 import { Flower } from "../../types/flower";
 
 const COLORS = {
@@ -114,16 +116,8 @@ export default function ShopScreen() {
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={() =>
-              router.push({
-                pathname: "/product/[id]",
-                params: {
-                  id: String(item.id),
-                  name: item.name ?? "",
-                  description: item.description ?? "",
-                  price: String(item.price ?? 0),
-                  imageUrl: item.imageUrl ?? "",
-                },
-              })
+              // cast to any to allow passing params object (expo-router strict types)
+              router.push({ pathname: '/product/[id]', params: { id: String(item.id) } } as any)
             }
             style={{ flex: 1 }}
           >
@@ -135,11 +129,14 @@ export default function ShopScreen() {
         contentContainerStyle={{ padding: 12, gap: 8 }}
         showsVerticalScrollIndicator={false}
       />
+      {/* AI chat bubble (floating) */}
+      <AIChatBubble flowers={data} />
     </SafeAreaView>
   );
 }
 
 function ProductCard({ item }: { item: Flower }) {
+  const { addToCart } = useCart();
   const priceText = useMemo(
     () => `${item.price.toLocaleString("vi-VN")} đ`,
     [item.price]
@@ -164,7 +161,12 @@ function ProductCard({ item }: { item: Flower }) {
           {item.description}
         </Text>
         <Text style={styles.price}>{priceText}</Text>
-        <TouchableOpacity style={styles.addBtn} onPress={() => {}}>
+        <TouchableOpacity
+          style={styles.addBtn}
+          onPress={() =>
+            addToCart({ productId: String(item.id), name: item.name, price: item.price }, 1)
+          }
+        >
           <Text style={styles.addText}>Add to cart</Text>
         </TouchableOpacity>
       </View>

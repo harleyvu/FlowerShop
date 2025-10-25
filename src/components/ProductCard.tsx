@@ -21,9 +21,9 @@ export default function ProductCard({ product }: ProductCardProps) {
     addToCart({ productId: pid, name: product.name, price }, qty);
     setQty(1);
     // show action to view checkout or continue
-    Alert.alert('Added to cart', `${product.name} đã được thêm vào giỏ`, [
-      { text: 'Tiếp tục mua', style: 'cancel' },
-      { text: 'Xem giỏ hàng', onPress: () => router.push({ pathname: '/cart' } as any) },
+    Alert.alert('Added to cart', `${product.name} has added to cartỏ`, [
+      { text: 'Continue buy', style: 'cancel' },
+      { text: 'Look at the cart', onPress: () => router.push({ pathname: '/cart' } as any) },
     ]);
   }
 

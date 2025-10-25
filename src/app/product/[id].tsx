@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useCart } from '../../contexts/CartContext';
 
 const COLORS = {
   primary: '#27c16b',
@@ -19,6 +20,8 @@ export default function ProductDetail() {
   const { id, name, description, price, imageUrl } = useLocalSearchParams<{
     id: string; name: string; description: string; price: string; imageUrl?: string;
   }>();
+
+  const { addToCart } = useCart();
 
   const [qty, setQty] = useState(1);
   const priceText = useMemo(() => {
@@ -72,7 +75,15 @@ export default function ProductDetail() {
 
           <Text style={styles.price}>{priceText}</Text>
 
-          <TouchableOpacity style={styles.addBtn} onPress={() => {}}>
+          <TouchableOpacity style={styles.addBtn} onPress={() => {
+            const qty = 1;
+            const pid = String(id ?? '');
+            addToCart({ productId: pid, name: name ?? 'Product', price: Number(price ?? 0) }, qty);
+            Alert.alert('Added to cart', `${name ?? 'Sản phẩm'} đã được thêm vào giỏ`, [
+              { text: 'Tiếp tục mua', style: 'cancel' },
+              { text: 'Xem giỏ hàng', onPress: () => router.push({ pathname: '/cart' } as any) },
+            ]);
+          }}>
             <Text style={styles.addText}>Add to cart</Text>
           </TouchableOpacity>
         </View>

@@ -12,10 +12,10 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { restoreAuthToken } from "../../api/apiClient";
-import * as orderApi from "../../api/orderModel";
-import { useCart, type CartItem } from "../../contexts/CartContext";
-import { restoreUser } from "../../controllers/userController";
+import { restoreAuthToken } from "../api/apiClient";
+import * as orderApi from "../api/orderModel";
+import { useCart, type CartItem } from "../contexts/CartContext";
+import { restoreUser } from "../controllers/userController";
 
 const COLORS = {
   primary: "#27c16b",

@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Payment Result</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;padding:24px;background:#f6faf7;color:#203a2f}
+    .card{max-width:720px;margin:28px auto;background:#fff;border-radius:12px;padding:20px;box-shadow:0 6px 20px rgba(0,0,0,0.06)}
+    .status{display:flex;align-items:center;gap:12px}
+    .ok{color:#27c16b;font-weight:800}
+    .bad{color:#ff6b6b;font-weight:800}
+    pre{background:#f0f4f2;padding:12px;border-radius:8px;overflow:auto}
+    .actions{margin-top:18px;display:flex;gap:10px}
+    .btn{padding:10px 14px;border-radius:8px;border:0;cursor:pointer}
+    .btn-primary{background:#27c16b;color:#fff}
+    .btn-outline{background:#fff;border:1px solid #e6eee9}
+    .muted{color:#6b8f80}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div id="root">
+      <h2>Processing payment...</h2>
+    </div>
+  </div>
+
+  <script>
+    // Try three ways to get the payload:
+    // 1) Server may render this HTML and inject a global PAYMENT_RESPONSE object.
+    // 2) Gateway may redirect with a single JSON query param 'response' (URL-encoded).
+    // 3) Gateway may redirect with individual query params: orderId, amount, orderInfo, message, fullName
+
+    function parseQuery() {
+      const qs = location.search.replace(/^\?/, '');
+      if (!qs) return {};
+      const pairs = qs.split('&');
+      const out = {};
+      for (const p of pairs) {
+        const [k,v] = p.split('=');
+        try { out[decodeURIComponent(k)] = decodeURIComponent(v || ''); } catch { out[k]=v||''; }
+      }
+      return out;
+    }
+
+    (function(){
+      // 1) server-injected
+      const root = document.getElementById('root');
+      let payload = window.PAYMENT_RESPONSE || window.paymentResponse || null;
+
+      // 2) check query param 'response' or 'data' which contains JSON
+      const q = parseQuery();
+      if (!payload && (q.response || q.data)) {
+        try { payload = JSON.parse(q.response || q.data); } catch(e) { console.warn('response not JSON'); payload = null; }
+      }
+
+      // 3) fallback to individual params
+      if (!payload && (q.orderId || q.amount || q.message)) {
+        payload = {
+          fullName: q.fullName || q.fullname || null,
+          orderId: q.orderId || q.orderid || q.order_id || '',
+          amount: q.amount || '',
+          orderInfo: q.orderInfo || q.orderinfo || '',
+          message: q.message || ''
+        };
+      }
+
+      if (!payload) {
+        root.innerHTML = '<h2 class="muted">No payment data received</h2><p class="muted">The payment provider did not send any result parameters. If you control the return URL, please forward the JSON payload as ?response=<encoded JSON> or render this HTML and inject the JSON into <code>window.PAYMENT_RESPONSE</code>.</p>';
+        return;
+      }
+
+      const msg = (payload.message || payload.msg || payload.status || '').toString();
+      const info = payload.orderInfo || payload.orderinfo || '';
+      const isSuccess = /success|thành công|ok/i.test(msg + ' ' + info);
+
+      root.innerHTML = `
+        <div class="status">
+          <div style="font-size:36px">${isSuccess? '✅':'❌'}</div>
+          <div>
+            <div style="font-size:20px; font-weight:800; color:${isSuccess? '#27c16b':'#ff6b6b'}">${isSuccess? 'Payment Successful':'Payment Failed'}</div>
+            <div class="muted" style="margin-top:6px">${msg || info || ''}</div>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <div><strong>Order:</strong> ${payload.orderId || '-'}</div>
+          <div><strong>Amount:</strong> ${payload.amount ? Number(payload.amount).toLocaleString() : '-'}</div>
+        </div>
+        <pre style="margin-top:12px">${JSON.stringify(payload, null, 2)}</pre>
+        <div class="actions">
+          <button class="btn btn-primary" id="openApp">Open App</button>
+          <button class="btn btn-outline" id="openOrder">View Order (web)</button>
+          <button class="btn btn-outline" id="backShop">Back to Shop</button>
+        </div>
+      `;
+
+      // Customize these deep links / web pages to match your deployment
+      const appScheme = 'flowerfly://payment/result'; // change to your app scheme if any
+      document.getElementById('openApp').addEventListener('click', ()=>{
+        try {
+          const encoded = encodeURIComponent(JSON.stringify(payload));
+          // deep-link into the app (app must handle this scheme)
+          location.href = appScheme + '?response=' + encoded;
+        } catch(e){ console.error(e); }
+      });
+
+      document.getElementById('openOrder').addEventListener('click', ()=>{
+        if (!payload.orderId) return alert('No order id');
+        // if you host a web order page, change this URL accordingly
+        location.href = '/order/' + encodeURIComponent(payload.orderId);
+      });
+
+      document.getElementById('backShop').addEventListener('click', ()=>{
+        location.href = '/';
+      });
+
+      // optional: auto-open app when success
+      if (isSuccess) {
+        setTimeout(()=>{ try { const encoded = encodeURIComponent(JSON.stringify(payload)); location.href = appScheme + '?response=' + encoded; } catch{} }, 1500);
+      }
+
+    })();
+  </script>
+</body>
+</html>

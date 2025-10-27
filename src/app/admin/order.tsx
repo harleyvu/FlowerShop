@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { apiClient } from "../../api/apiClient";
 
@@ -99,7 +99,7 @@ export default function OrderScreen() {
       <Text style={styles.orderId}>Order #{item.id}</Text>
       <Text style={styles.line}>Sender: {item.senderName}</Text>
       <Text style={styles.line}>Recipient: {item.recipient}</Text>
-      <Text style={styles.line}>Total: ${item.total.toFixed(2)}</Text>
+      <Text style={styles.line}>Total: {item.total.toFixed(2)}đ</Text>
       <Text style={[styles.status, getOrderStatusStyle(item.status)]}>
         {mapOrderStatus(item.status)}
       </Text>
@@ -145,13 +145,13 @@ export default function OrderScreen() {
                 <View key={it.id} style={styles.itemRow}>
                   <Text>{it.flowerName}</Text>
                   <Text>x{it.quantity}</Text>
-                  <Text>${it.lineTotal}</Text>
+                  <Text>{it.lineTotal}đ</Text>
                 </View>
               ))}
 
               <Text style={styles.sectionTitle}>Payment:</Text>
               <Text>Method: {mapPaymentMethod(selectedOrder?.payment?.method)}</Text>
-              <Text>Amount: ${selectedOrder?.payment?.amount}</Text>
+              <Text>Amount: {selectedOrder?.payment?.amount}đ</Text>
               <Text>Status: {mapPaymentStatus(selectedOrder?.payment?.status)}</Text>
 
               <Text style={styles.sectionTitle}>Update Order Status:</Text>

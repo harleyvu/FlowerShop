@@ -158,7 +158,7 @@ export default function CheckoutScreen() {
           <>
             <View style={styles.summary}>
               <Text style={styles.totalText}>Total:</Text>
-              <Text style={styles.totalValue}>{total} $</Text>
+              <Text style={styles.totalValue}>{total} đ</Text>
             </View>
             <TouchableOpacity
               style={styles.checkoutBtn}

@@ -10,7 +10,7 @@ import { Flower } from "../types/flower";
  * - Thiết bị thật:    http://<IP_PC>:5098
  */
 const API_BASE_URL =
-  Platform.OS === "android" ? "http://10.87.18.179:5098" : "http://10.87.18.179:5098";
+  Platform.OS === "android" ? "http://192.168.1.6:5098" : "http://192.168.1.6:5098";
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

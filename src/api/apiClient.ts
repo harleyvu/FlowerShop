@@ -38,3 +38,12 @@ export async function getFlowers(signal?: AbortSignal): Promise<Flower[]> {
   const res = await apiClient.get<Flower[]>("/api/Flower", { signal });
   return res.data;
 }
+
+// ADD: fetch by category using query param /api/Flower?category=1..8
+export async function getFlowersByCategory(category: number, signal?: AbortSignal): Promise<Flower[]> {
+  const res = await apiClient.get<Flower[]>("/api/Flower", {
+    params: { category },
+    signal,
+  });
+  return res.data;
+}

@@ -15,7 +15,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getFlowers } from '../../api/apiClient';
+import { getFlowers, getFlowersByCategory } from "../../api/apiClient";
 import AIChatBubble from '../../components/AIChatBubble';
 import { useCart } from "../../contexts/CartContext";
 import { Flower } from "../../types/flower";
@@ -39,7 +39,7 @@ export default function ShopScreen() {
 
   // +++ Filter UI states
   const [showFilter, setShowFilter] = useState(false);
-  const [uiPriceIndex, setUiPriceIndex] = useState(3);     // 0..3 (min -> max)
+  const [uiPriceIndex, setUiPriceIndex] = useState(3);
   const [uiCategory, setUiCategory] = useState<number | null>(null);
 
   // +++ Nhận param để auto mở modal
@@ -85,6 +85,45 @@ export default function ShopScreen() {
       </View>
     );
   }
+
+  // ADD: Apply -> call API filtered by category; Reset -> reload all
+  const applyFilter = async () => {
+    try {
+      setShowFilter(false);
+      setLoading(true);
+      setError(null);
+      const ac = new AbortController();
+
+      let flowers;
+      if (uiCategory != null) {
+        flowers = await getFlowersByCategory(uiCategory, ac.signal);
+      } else {
+        flowers = await getFlowers(ac.signal);
+      }
+      setData(flowers);
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to load products");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetFilter = async () => {
+    setUiCategory(null);
+    setUiPriceIndex(3);
+    try {
+      setShowFilter(false);
+      setLoading(true);
+      setError(null);
+      const ac = new AbortController();
+      const flowers = await getFlowers(ac.signal);
+      setData(flowers);
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to load products");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -146,26 +185,12 @@ export default function ShopScreen() {
       {/* ===== FILTER MODAL — UI ONLY (Price + Category) ===== */}
       <Modal visible={showFilter} animationType="slide" onRequestClose={() => setShowFilter(false)}>
         <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.bg }}>
-          {/* Modal header */}
-          <View style={styles.fHeader}>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => setShowFilter(false)}>
-              <Ionicons name="arrow-back" size={20} color={COLORS.dark} />
-            </TouchableOpacity>
-            <Text style={styles.brand}>Flowerfly</Text>
+          {/* Modal header — only close button */}
+          <View style={styles.modalCloseHeader}>
+            <View style={{ flex: 1 }} />
             <TouchableOpacity style={styles.iconBtn} onPress={() => setShowFilter(false)}>
               <Ionicons name="close" size={20} color={COLORS.dark} />
             </TouchableOpacity>
-          </View>
-
-          {/* Search row (chỉ giao diện) */}
-          <View style={styles.searchRow}>
-            <View style={styles.searchBox}>
-              <Ionicons name="search" size={18} color="#7c9b8f" />
-              <Text style={[styles.searchInput, { color: "#7c9b8f" }]}>Search</Text>
-            </View>
-            <View style={styles.filterBtn}>
-              <Image source={require("../../assets/filter.png")} style={styles.filterIcon} />
-            </View>
           </View>
 
           <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
@@ -230,13 +255,13 @@ export default function ShopScreen() {
           <View style={styles.footerActions}>
             <TouchableOpacity
               style={[styles.footerBtn, { backgroundColor: "#eaf6ef" }]}
-              onPress={() => { setUiCategory(null); setUiPriceIndex(3); }}
+              onPress={resetFilter}
             >
               <Text style={[styles.footerText, { color: COLORS.primary }]}>Reset</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.footerBtn, { backgroundColor: COLORS.primary }]}
-              onPress={() => setShowFilter(false)}
+              onPress={applyFilter}
             >
               <Text style={[styles.footerText, { color: "#fff" }]}>Apply</Text>
             </TouchableOpacity>
@@ -440,4 +465,13 @@ const styles = StyleSheet.create({
   footerActions: { flexDirection: "row", gap: 10, padding: 14, backgroundColor: COLORS.bg, borderTopWidth: 1, borderTopColor: COLORS.border },
   footerBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: "center" },
   footerText: { fontWeight: "700" },
+
+  // modal close header (right aligned X)
+  modalCloseHeader: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+  },
 });

@@ -15,7 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { handleRegister } from "../../controllers/userController"; // <<< ADD
+import { handleRegister } from "../../controllers/userController";
 
 /* BACKGROUND */
 const bg = require("../../assets/background.png");
@@ -23,7 +23,6 @@ const bg = require("../../assets/background.png");
 const pacificoFont = require("../../assets/fonts/Pacifico-Regular.ttf");
 
 export default function SignUp() {
-  const router = useRouter(); // <<< ADD
   const [fontsLoaded] = useFonts({ Pacifico: pacificoFont });
   const router = useRouter();
 
@@ -35,18 +34,12 @@ export default function SignUp() {
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false); // <<< ADD
 
-  const onSignup = async () => {                 // <<< ADD
-    if (!email || !password) {
-      Alert.alert("Missing info", "Please enter email and password");
-      return;
-    }
-    if (password !== confirm) {
-      Alert.alert("Password mismatch", "Please confirm your password");
-      return;
-    }
+  const onSignup = async () => {
+    if (!email || !password) return Alert.alert("Missing info", "Please enter email and password");
+    if (password !== confirm) return Alert.alert("Password mismatch", "Please confirm your password");
     try {
       setLoading(true);
-      await handleRegister({ email, password, firstName, lastName });
+      await handleRegister({ email, password, firstName, lastName }); // <-- object call
       Alert.alert("Success", "Registration successful");
       router.replace("/(tabs)/home");
     } catch (err: any) {
@@ -57,32 +50,6 @@ export default function SignUp() {
   };
 
   if (!fontsLoaded) return <ActivityIndicator style={{ flex: 1 }} />;
-
-  // Hàm xử lý đăng ký
-  const handleSignUp = async () => {
-    if (!firstName || !lastName || !email || !password) {
-      Alert.alert("Missing info", "Please fill in all fields.");
-      return;
-    }
-    if (password !== confirm) {
-      Alert.alert("Password mismatch", "Passwords do not match.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      await handleRegister(firstName, lastName, email, password);
-
-      Alert.alert("Success", "Account created successfully!", [
-        { text: "OK", onPress: () => router.replace("/login") },
-      ]);
-    } catch (err: any) {
-      console.error(err);
-      Alert.alert("Error", err.message || "Something went wrong.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <ImageBackground source={bg} style={styles.bg} resizeMode="cover">

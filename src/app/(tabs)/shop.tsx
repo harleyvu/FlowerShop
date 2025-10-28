@@ -1,11 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   FlatList,
   Image,
+  Modal, // +++
+  ScrollView, // +++
   StyleSheet,
   Text,
   TextInput,
@@ -13,7 +15,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getFlowers } from "../../api/apiClient";
+import { getFlowers } from '../../api/apiClient';
 import AIChatBubble from '../../components/AIChatBubble';
 import { useCart } from "../../contexts/CartContext";
 import { Flower } from "../../types/flower";
@@ -34,6 +36,17 @@ export default function ShopScreen() {
   const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const router = useRouter();
+
+  // +++ Filter UI states
+  const [showFilter, setShowFilter] = useState(false);
+  const [uiPriceIndex, setUiPriceIndex] = useState(3);     // 0..3 (min -> max)
+  const [uiCategory, setUiCategory] = useState<number | null>(null);
+
+  // +++ Nhận param để auto mở modal
+  const { openFilter } = useLocalSearchParams<{ openFilter?: string }>();
+  useEffect(() => {
+    if (openFilter) setShowFilter(true);
+  }, [openFilter]);
 
   const load = async (signal?: AbortSignal) => {
     try {
@@ -89,7 +102,7 @@ export default function ShopScreen() {
         </View>
       </View>
 
-      {/* Search + Filter (copy từ home.tsx) */}
+      {/* Search + Filter */}
       <View style={styles.searchRow}>
         <View style={styles.searchBox}>
           <Ionicons name="search" size={18} color="#7c9b8f" />
@@ -101,11 +114,8 @@ export default function ShopScreen() {
             style={styles.searchInput}
           />
         </View>
-        <TouchableOpacity style={styles.filterBtn}>
-          <Image
-            source={require("../../assets/filter.png")}
-            style={styles.filterIcon}
-          />
+        <TouchableOpacity style={styles.filterBtn} onPress={() => setShowFilter(true)}>
+          <Image source={require("../../assets/filter.png")} style={styles.filterIcon} />
         </TouchableOpacity>
       </View>
 
@@ -132,6 +142,107 @@ export default function ShopScreen() {
       />
       {/* AI chat bubble (floating) */}
       <AIChatBubble flowers={data} />
+
+      {/* ===== FILTER MODAL — UI ONLY (Price + Category) ===== */}
+      <Modal visible={showFilter} animationType="slide" onRequestClose={() => setShowFilter(false)}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.bg }}>
+          {/* Modal header */}
+          <View style={styles.fHeader}>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => setShowFilter(false)}>
+              <Ionicons name="arrow-back" size={20} color={COLORS.dark} />
+            </TouchableOpacity>
+            <Text style={styles.brand}>Flowerfly</Text>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => setShowFilter(false)}>
+              <Ionicons name="close" size={20} color={COLORS.dark} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Search row (chỉ giao diện) */}
+          <View style={styles.searchRow}>
+            <View style={styles.searchBox}>
+              <Ionicons name="search" size={18} color="#7c9b8f" />
+              <Text style={[styles.searchInput, { color: "#7c9b8f" }]}>Search</Text>
+            </View>
+            <View style={styles.filterBtn}>
+              <Image source={require("../../assets/filter.png")} style={styles.filterIcon} />
+            </View>
+          </View>
+
+          <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
+            <Text style={styles.sortBy}>Sort By</Text>
+
+            {/* Price */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeaderRow}>
+                <View style={styles.dotGreen} />
+                <Text style={styles.sectionTitle}>Price</Text>
+              </View>
+
+              {/* Fake histogram + track + knob (UI only) */}
+              <View style={styles.histogramRow}>
+                {[14, 26, 38, 30, 44].map((h, i) => (
+                  <View key={i} style={[styles.bar, { height: h }]} />
+                ))}
+                <View style={styles.track} />
+                <View style={[styles.knob, { left: `${uiPriceIndex * 33.33}%` }]} />
+              </View>
+
+              {/* Steps */}
+              <View style={styles.chipsRow}>
+                {["15$", "50$", "150$", "1000$"].map((t, i) => (
+                  <TouchableOpacity
+                    key={t}
+                    onPress={() => setUiPriceIndex(i)}
+                    style={[styles.chip, uiPriceIndex === i && styles.chipActive]}
+                  >
+                    <Text style={[styles.chipText, uiPriceIndex === i && styles.chipTextActive]}>{t}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Category */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeaderRow}>
+                <View style={styles.dotGreen} />
+                <Text style={styles.sectionTitle}>Category</Text>
+              </View>
+
+              <View style={styles.catGrid}>
+                {CATEGORY_OPTIONS.map((c) => {
+                  const active = uiCategory === c.id;
+                  return (
+                    <TouchableOpacity
+                      key={c.id}
+                      style={[styles.catItem, active && styles.catItemActive]}
+                      onPress={() => setUiCategory(active ? null : c.id)}
+                    >
+                      <Image source={{ uri: c.image }} style={styles.catImg} />
+                      <Text style={styles.catName} numberOfLines={1}>{c.name}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          </ScrollView>
+
+          {/* Footer buttons */}
+          <View style={styles.footerActions}>
+            <TouchableOpacity
+              style={[styles.footerBtn, { backgroundColor: "#eaf6ef" }]}
+              onPress={() => { setUiCategory(null); setUiPriceIndex(3); }}
+            >
+              <Text style={[styles.footerText, { color: COLORS.primary }]}>Reset</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.footerBtn, { backgroundColor: COLORS.primary }]}
+              onPress={() => setShowFilter(false)}
+            >
+              <Text style={[styles.footerText, { color: "#fff" }]}>Apply</Text>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -183,6 +294,18 @@ function ProductCard({ item }: { item: Flower }) {
     </View>
   );
 }
+
+// +++ Category mock for UI
+const CATEGORY_OPTIONS = [
+  { id: 1, name: "Roses", image: "https://images.unsplash.com/photo-1509043759401-136742328bb3?w=200" },
+  { id: 5, name: "Orchids", image: "https://images.unsplash.com/photo-1468824357306-a439d58ccb1c?w=200" },
+  { id: 2, name: "Tulips", image: "https://images.unsplash.com/photo-1464965911892-8a99f4a06e0b?w=200" },
+  { id: 4, name: "Lilies", image: "https://images.unsplash.com/photo-1504198266285-165a3c76e0d3?w=200" },
+  { id: 6, name: "Sunflowers", image: "https://images.unsplash.com/photo-1502989642968-94fbdc9eace4?w=200" },
+  { id: 7, name: "Carnations", image: "https://images.unsplash.com/photo-1544551763-7ef4200b69c3?w=200" },
+  { id: 8, name: "Mixed", image: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=200" },
+  { id: 3, name: "Daisies", image: "https://images.unsplash.com/photo-1520975937573-5f7f4f0b4c04?w=200" },
+];
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.bg },
@@ -282,4 +405,39 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   addText: { color: "#fff", fontWeight: "700" },
+
+  // ===== Modal styles =====
+  fHeader: {
+    paddingHorizontal: 14, paddingBottom: 6,
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+  },
+  sortBy: { paddingHorizontal: 14, color: COLORS.text, fontWeight: "800", marginBottom: 6 },
+  section: {
+    backgroundColor: COLORS.card, marginHorizontal: 14, marginBottom: 12,
+    borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, padding: 12,
+  },
+  sectionHeaderRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
+  dotGreen: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.primary },
+  sectionTitle: { fontWeight: "800", color: COLORS.text },
+
+  histogramRow: { position: "relative", height: 50, marginVertical: 8, flexDirection: "row", alignItems: "flex-end", gap: 6 },
+  bar: { width: 22, backgroundColor: "#dff2e7", borderTopLeftRadius: 4, borderTopRightRadius: 4 },
+  track: { position: "absolute", left: 0, right: 0, bottom: 2, height: 4, backgroundColor: "#cde8da", borderRadius: 2 },
+  knob: { position: "absolute", bottom: -4, width: 16, height: 16, borderRadius: 8, backgroundColor: COLORS.primary, transform: [{ translateX: -8 }] },
+
+  chipsRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 6 },
+  chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bg },
+  chipActive: { borderColor: COLORS.primary, backgroundColor: "#e9f5ef" },
+  chipText: { color: COLORS.sub, fontWeight: "600" },
+  chipTextActive: { color: COLORS.dark },
+
+  catGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  catItem: { width: 74, alignItems: "center", padding: 8, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.card },
+  catItemActive: { borderColor: COLORS.primary, backgroundColor: "#e9f5ef" },
+  catImg: { width: 40, height: 40, borderRadius: 20, marginBottom: 6 },
+  catName: { fontSize: 12, color: COLORS.text },
+
+  footerActions: { flexDirection: "row", gap: 10, padding: 14, backgroundColor: COLORS.bg, borderTopWidth: 1, borderTopColor: COLORS.border },
+  footerBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: "center" },
+  footerText: { fontWeight: "700" },
 });

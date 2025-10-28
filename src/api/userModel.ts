@@ -7,32 +7,27 @@ export async function loginUser(payload: LoginPayload) {
   return res.data;
 }
 
-// --- ADD: register ---
+// ADD: strong types for register
 export type RegisterPayload = {
-  userName: string;
+  userName: string;        // <-- correct field name
   email: string;
   password: string;
   firstName?: string;
   lastName?: string;
   phoneNumber?: string;
   address?: string;
-  dateOfBirth?: string; // ISO
-  role?: number;
+  dateOfBirth?: string;    // optional, ISO string
+  role?: number;           // optional, e.g. 3
 };
 
-type RegisterResponse = {
+export type RegisterResponse = {
   success: boolean;
   message: string;
-  data: {
-    user: any;
-    token: string;
-  };
+  data?: { user: any; token: string };
 };
 
-export async function registerUser(payload: RegisterPayload) {
-  // POST http://localhost:5098/api/User/register
-  const res = await apiClient.post<RegisterResponse>("/api/User/register", payload, {
-    headers: { "Content-Type": "application/json" },
-  });
-  return res.data; // { success, message, data: { user, token } }
-}
+// FIX: use userName, not username
+export async function registerUser(payload: RegisterPayload): Promise<RegisterResponse> {
+  const res = await apiClient.post("/api/User/register", payload);
+  return res.data;
+};

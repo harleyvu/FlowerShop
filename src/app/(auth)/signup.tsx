@@ -32,35 +32,24 @@ export default function SignUp() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // <<< ADD
 
-  if (!fontsLoaded) return <ActivityIndicator style={{ flex: 1 }} />;
-
-  // Hàm xử lý đăng ký
-  const handleSignUp = async () => {
-    if (!firstName || !lastName || !email || !password) {
-      Alert.alert("Missing info", "Please fill in all fields.");
-      return;
-    }
-    if (password !== confirm) {
-      Alert.alert("Password mismatch", "Passwords do not match.");
-      return;
-    }
-
+  const onSignup = async () => {
+    if (!email || !password) return Alert.alert("Missing info", "Please enter email and password");
+    if (password !== confirm) return Alert.alert("Password mismatch", "Please confirm your password");
     try {
       setLoading(true);
-      await handleRegister(firstName, lastName, email, password);
-
-      Alert.alert("Success", "Account created successfully!", [
-        { text: "OK", onPress: () => router.replace("/login") },
-      ]);
+      await handleRegister({ email, password, firstName, lastName }); // <-- object call
+      Alert.alert("Success", "Registration successful");
+      router.replace("/(tabs)/home");
     } catch (err: any) {
-      console.error(err);
-      Alert.alert("Error", err.message || "Something went wrong.");
+      Alert.alert("Sign up failed", err?.message || "Unable to register");
     } finally {
       setLoading(false);
     }
   };
+
+  if (!fontsLoaded) return <ActivityIndicator style={{ flex: 1 }} />;
 
   return (
     <ImageBackground source={bg} style={styles.bg} resizeMode="cover">
@@ -120,17 +109,9 @@ export default function SignUp() {
                 secureTextEntry
               />
 
-              <TouchableOpacity
-                style={[styles.primaryButton, loading && { opacity: 0.7 }]}
-                onPress={handleSignUp}
-                disabled={loading}
-                activeOpacity={0.85}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.primaryButtonText}>Sign up</Text>
-                )}
+              {/* CALL REGISTER HERE */}
+              <TouchableOpacity style={styles.primaryButton} activeOpacity={0.85} onPress={onSignup} disabled={loading}>
+                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Sign up</Text>}
               </TouchableOpacity>
 
               <View style={styles.orWrap}>

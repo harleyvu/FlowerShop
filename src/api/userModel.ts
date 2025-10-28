@@ -7,15 +7,27 @@ export async function loginUser(payload: LoginPayload) {
   return res.data;
 }
 
-export const registerUser = async (payload: {
-  firstName: string;
-  lastName: string;
+// ADD: strong types for register
+export type RegisterPayload = {
+  userName: string;        // <-- correct field name
   email: string;
   password: string;
-  username: string;
-  phoneNumber: string;
-  address: string;
-}) => {
+  firstName?: string;
+  lastName?: string;
+  phoneNumber?: string;
+  address?: string;
+  dateOfBirth?: string;    // optional, ISO string
+  role?: number;           // optional, e.g. 3
+};
+
+export type RegisterResponse = {
+  success: boolean;
+  message: string;
+  data?: { user: any; token: string };
+};
+
+// FIX: use userName, not username
+export async function registerUser(payload: RegisterPayload): Promise<RegisterResponse> {
   const res = await apiClient.post("/api/User/register", payload);
   return res.data;
 };

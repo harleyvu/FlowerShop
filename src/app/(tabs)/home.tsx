@@ -1,8 +1,6 @@
-import { Ionicons } from "@expo/vector-icons";
-// import { useFonts } from "expo-font"; // <-- 1. XÓA DÒNG NÀY
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Alert, Dimensions,
   FlatList,
@@ -10,15 +8,13 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View
 } from 'react-native';
-import { SafeAreaView } from "react-native-safe-area-context"; // <-- 1. Thêm import
+import { SafeAreaView } from "react-native-safe-area-context";
 import BannerCarousel from "../../components/BannerCarousel";
 import { useCart } from '../../contexts/CartContext';
 
-// ============ COLORS / THEME ============
 const COLORS = {
   primary: "#27c16b",
   dark: "#1f7a4c",
@@ -29,21 +25,9 @@ const COLORS = {
   border: "#e6eee9",
 };
 
-// ============ TYPES ============
-export type Product = {
-  id: string | number;
-  name: string;
-  price: number;
-  image: string;
-};
+export type Product = { id: string | number; name: string; price: number; image: string; };
+export type Category = { id: string | number; name: string; image: string; };
 
-export type Category = {
-  id: string | number;
-  name: string;
-  image: string;
-};
-
-// ============ MOCK DATA (replace with API later) ============
 const BANNERS: string[] = [
   "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=1600",
   "https://images.unsplash.com/photo-1493340775710-2f33f4f6f56b?q=80&w=1600&auto=format&fit=crop",
@@ -73,11 +57,9 @@ const HALLOWEEN: Product[] = [
 const { width } = Dimensions.get("window");
 
 export default function Home() {
-  
   const router = useRouter();
   const { items } = useCart();
   const [pendingCartNotify, setPendingCartNotify] = useState(false);
-  const [q, setQ] = useState("");
 
   // On mount, check if we should show cart notification set during login
   useEffect(() => {
@@ -115,65 +97,33 @@ export default function Home() {
     setPendingCartNotify(false);
   }, [pendingCartNotify, items, router]);
 
-  const filteredTrending = useMemo(
-    () => TRENDING.filter((p) => p.name.toLowerCase().includes(q.trim().toLowerCase())),
-    [q]
-  );
-
   return (
-    // 2. Bọc toàn bộ nội dung trong SafeAreaView
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
         {/* Header */}
         <View style={styles.header}>
-          {/* THAY ĐỔI 1: Thêm một View trống để cân bằng */}
           <View style={{ width: 36 }} />
           <Text style={styles.brand}>Flowerfly</Text>
           <View style={{ flexDirection: "row", gap: 10 }}>
             <TouchableOpacity style={styles.iconBtn}>
-              {/* THAY ĐỔI 1: Thay thế Ionicons bằng Image */}
               <Image source={require('../../assets/notification.png')} style={styles.headerIcon} />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Search + Filter */}
-        <View style={styles.searchRow}>
-          <View style={styles.searchBox}>
-            <Ionicons name="search" size={18} color="#7c9b8f" />
-            <TextInput
-              value={q}
-              onChangeText={setQ}
-              placeholder="Search"
-              placeholderTextColor="#7c9b8f"
-              style={styles.searchInput}
-            />
-            
-          </View>
-          <TouchableOpacity style={styles.filterBtn}>
-            {/* THAY ĐỔI 2: Thay thế Ionicons bằng Image */}
-            <Image source={require('../../assets/filter.png')} style={styles.filterIcon} />
-          </TouchableOpacity>
-        </View>
+        {/* ĐÃ BỎ thanh Search + Filter */}
 
-        {/* Banner carousel — chỉ ảnh, không View all, không badge */}
+        {/* Banner carousel */}
         <BannerCarousel images={BANNERS} height={180} borderRadius={16} autoplay />
 
         {/* Categories */}
-        <SectionHeader
-          title="Categories"
-          onPressViewAll={() => router.push("/shop")}
-        />
+        <SectionHeader title="Categories" onPressViewAll={() => router.push("/shop")} />
         <FlatList
           horizontal
           data={CATEGORIES}
           keyExtractor={(i) => String(i.id)}
           renderItem={({ item }) => (
-            <CategoryPill
-              name={item.name}
-              image={item.image}
-              onPress={() => router.push("/shop")}
-            />
+            <CategoryPill name={item.name} image={item.image} onPress={() => router.push("/shop")} />
           )}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 12, gap: 10 }}
@@ -184,7 +134,7 @@ export default function Home() {
         <SectionHeader title="Trends & Popular now" />
         <FlatList
           horizontal
-          data={filteredTrending}
+          data={TRENDING}
           keyExtractor={(i) => String(i.id)}
           renderItem={({ item }) => <ProductCardSmall item={item} />}
           showsHorizontalScrollIndicator={false}
@@ -223,16 +173,7 @@ export default function Home() {
   );
 }
 
-// ============ Subcomponents ============
-function SectionHeader({
-  title,
-  onPressViewAll,
-  withDot,
-}: {
-  title: string;
-  onPressViewAll?: () => void;
-  withDot?: boolean;
-}) {
+function SectionHeader({ title, onPressViewAll, withDot }: { title: string; onPressViewAll?: () => void; withDot?: boolean; }) {
   return (
     <View style={styles.sectionHeader}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
@@ -248,21 +189,11 @@ function SectionHeader({
   );
 }
 
-function CategoryPill({
-  name,
-  image,
-  onPress,
-}: {
-  name: string;
-  image: string;
-  onPress?: () => void;
-}) {
+function CategoryPill({ name, image, onPress }: { name: string; image: string; onPress?: () => void; }) {
   return (
     <TouchableOpacity style={styles.catPill} onPress={onPress} activeOpacity={0.85}>
       <Image source={{ uri: image }} style={styles.catImage} />
-      <Text numberOfLines={2} style={styles.catText}>
-        {name}
-      </Text>
+      <Text numberOfLines={2} style={styles.catText}>{name}</Text>
     </TouchableOpacity>
   );
 }
@@ -271,111 +202,50 @@ function ProductCardSmall({ item }: { item: Product }) {
   return (
     <View style={styles.productCard}>
       <Image source={{ uri: item.image }} style={styles.productImg} />
-      <Text numberOfLines={2} style={styles.productName}>
-        {item.name}
-      </Text>
+      <Text numberOfLines={2} style={styles.productName}>{item.name}</Text>
       <Text style={styles.productPrice}>$ {item.price}</Text>
     </View>
   );
 }
 
-// ============ Styles ============
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
   header: {
     paddingHorizontal: 14,
-    // paddingTop: 8, // Không cần padding top ở đây nữa vì SafeAreaView đã xử lý
     paddingBottom: 6,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  // THAY ĐỔI 2: Cập nhật style cho brand
-  brand: {
-    fontFamily: "Pacifico-Regular", // Sử dụng font mới
-    fontSize: 32, // Tăng kích thước cho phù hợp với font
-    color: COLORS.dark,
-  },
+  brand: { fontFamily: "Pacifico-Regular", fontSize: 32, color: COLORS.dark },
   iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#e9f5ef",
-    alignItems: "center",
-    justifyContent: "center",
+    width: 36, height: 36, borderRadius: 18, backgroundColor: "#e9f5ef",
+    alignItems: "center", justifyContent: "center",
   },
-  // THAY ĐỔI 3: Thêm style cho icon header
-  headerIcon: {
-    width: 20,
-    height: 20,
-    tintColor: COLORS.dark,
-  },
-  searchRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 14,
-    marginBottom: 10,
-  },
-  searchBox: {
-    flex: 1,
-    backgroundColor: COLORS.card,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  searchInput: { flex: 1, color: COLORS.text },
-  filterBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.primary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  // THAY ĐỔI 4: Thêm style cho icon filter
-  filterIcon: {
-    width: 18,
-    height: 18,
-    tintColor: COLORS.card, // Màu trắng
-  },
+  headerIcon: { width: 20, height: 20, tintColor: COLORS.dark },
+
   sectionHeader: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    paddingHorizontal: 14, paddingVertical: 8,
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
   },
   sectionTitle: { fontSize: 16, fontWeight: "800", color: COLORS.text },
   viewAll: { color: COLORS.dark, fontWeight: "700" },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.primary, marginTop: 2 },
+
   catPill: {
-    width: 100,
-    backgroundColor: COLORS.card,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: 10,
-    alignItems: "center",
-    gap: 6,
+    width: 100, backgroundColor: COLORS.card, borderRadius: 14,
+    borderWidth: 1, borderColor: COLORS.border, padding: 10, alignItems: "center", gap: 6,
   },
   catImage: { width: 54, height: 54, borderRadius: 27 },
   catText: { fontSize: 12, textAlign: "center", color: COLORS.text },
+
   productCard: {
-    width: 160,
-    backgroundColor: COLORS.card,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: 10,
+    width: 160, backgroundColor: COLORS.card, borderRadius: 14,
+    borderWidth: 1, borderColor: COLORS.border, padding: 10,
   },
   productImg: { width: "100%", height: 90, borderRadius: 10, marginBottom: 6 },
   productName: { fontSize: 13, fontWeight: "600", color: COLORS.text },
   productPrice: { marginTop: 4, color: COLORS.primary, fontWeight: "800" },
+
   upcoming: { width: width - 28, height: 180, marginHorizontal: 14, borderRadius: 16 },
 });

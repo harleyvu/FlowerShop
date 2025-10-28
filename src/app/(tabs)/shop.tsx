@@ -43,17 +43,25 @@ export default function ShopScreen() {
   const [uiPriceIndex, setUiPriceIndex] = useState(3);
   const [uiCategory, setUiCategory] = useState<number | null>(null);
 
-  // +++ Nhận param để auto mở modal
-  const { openFilter } = useLocalSearchParams<{ openFilter?: string }>();
+  // +++ Nhận params từ route: category (sẽ load filtered) và openFilter
+  const params = useLocalSearchParams<{ category?: string; openFilter?: string }>();
   useEffect(() => {
-    if (openFilter) setShowFilter(true);
-  }, [openFilter]);
+    if (params?.openFilter) setShowFilter(true);
+  }, [params?.openFilter]);
 
-  const load = async (signal?: AbortSignal) => {
+  // Unified loader: if category provided -> call getFlowersByCategory
+  const load = async (category?: number | null, signal?: AbortSignal) => {
     try {
       setError(null);
       setLoading(true);
-      const flowers = await getFlowers(signal);
+      let flowers: Flower[] = [];
+      if (typeof category === "number" && !isNaN(category)) {
+        flowers = await getFlowersByCategory(category, signal);
+        setUiCategory(category);
+      } else {
+        flowers = await getFlowers(signal);
+        setUiCategory(null);
+      }
       setData(flowers);
     } catch (e: any) {
       setError(e?.message ?? "Failed to load products");
@@ -64,9 +72,10 @@ export default function ShopScreen() {
 
   useEffect(() => {
     const ac = new AbortController();
-    load(ac.signal);
+    const catParam = params?.category ? Number(params.category) : null;
+    load(catParam, ac.signal);
     return () => ac.abort();
-  }, []);
+  }, [params?.category]);
 
   if (loading) {
     return (

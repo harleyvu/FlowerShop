@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Alert, Dimensions,
   FlatList,
@@ -14,6 +14,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import BannerCarousel from "../../components/BannerCarousel";
 import { useCart } from '../../contexts/CartContext';
+import { getFlowersByCategory } from "../../api/apiClient";
+import type { Flower } from "../../types/flower";
 
 const COLORS = {
   primary: "#27c16b",
@@ -60,6 +62,59 @@ export default function Home() {
   const router = useRouter();
   const { items } = useCart();
   const [pendingCartNotify, setPendingCartNotify] = useState(false);
+  const [roses, setRoses] = useState<Flower[]>([]);
+  const [tulips, setTulips] = useState<Flower[]>([]);
+  const [lilies, setLilies] = useState<Flower[]>([]);
+
+  // category UI copied from shop
+  const [uiCategory, setUiCategory] = useState<number | null>(null);
+  // khi bấm lên 1 loài: set active UI và chuyển sang shop với param category
+  const onSelectCategory = (id: number) => {
+    setUiCategory((prev) => (prev === id ? null : id));
+    router.push({ pathname: "/(tabs)/shop", params: { category: String(id) } } as any);
+  };
+
+  // load roses (category = 1) to show as horizontal carousel on Home
+  useEffect(() => {
+    const ac = new AbortController();
+    (async () => {
+      try {
+        const res = await getFlowersByCategory(1, ac.signal);
+        setRoses(res ?? []);
+      } catch {
+        setRoses([]);
+      }
+    })();
+    return () => ac.abort();
+  }, []);
+
+  // load Tulips (category = 2)
+  useEffect(() => {
+    const ac = new AbortController();
+    (async () => {
+      try {
+        const res = await getFlowersByCategory(2, ac.signal);
+        setTulips(res ?? []);
+      } catch {
+        setTulips([]);
+      }
+    })();
+    return () => ac.abort();
+  }, []);
+
+  // load Lilies (category = 4)
+  useEffect(() => {
+    const ac = new AbortController();
+    (async () => {
+      try {
+        const res = await getFlowersByCategory(4, ac.signal);
+        setLilies(res ?? []);
+      } catch {
+        setLilies([]);
+      }
+    })();
+    return () => ac.abort();
+  }, []);
 
   // On mount, check if we should show cart notification set during login
   useEffect(() => {
@@ -116,58 +171,121 @@ export default function Home() {
         {/* Banner carousel */}
         <BannerCarousel images={BANNERS} height={180} borderRadius={16} autoplay />
 
-        {/* Categories */}
-        <SectionHeader title="Categories" onPressViewAll={() => router.push("/shop")} />
+        {/* Categories (horizontal single row) */}
+        <SectionHeader title="Category" />
         <FlatList
           horizontal
-          data={CATEGORIES}
-          keyExtractor={(i) => String(i.id)}
+          data={CATEGORY_OPTIONS}
+          keyExtractor={(c) => String(c.id)}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 14, paddingVertical: 10, alignItems: "center" }}
+          ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
+          renderItem={({ item }) => {
+            const active = uiCategory === item.id;
+            return (
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={() => onSelectCategory(item.id)}
+                style={[styles.catPillLarge, active && styles.catPillLargeActive]}
+              >
+                <Image source={{ uri: item.image }} style={styles.catPillLargeImg} />
+                <Text numberOfLines={1} style={[styles.catPillLargeText, active && styles.catPillLargeTextActive]}>
+                  {item.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          }}
+        />
+
+        {/* Roses (category=1) — horizontal list loaded from API, same logic as Shop */}
+        <SectionHeader
+          title="Roses"
+          onPressViewAll={() =>
+            router.push({ pathname: "/(tabs)/shop", params: { category: "1" } } as any)
+          }
+        />
+        <FlatList
+          horizontal
+          data={roses}
+          keyExtractor={(it) => String(it.id)}
           renderItem={({ item }) => (
-            <CategoryPill name={item.name} image={item.image} onPress={() => router.push("/shop")} />
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() =>
+                router.push({
+                  pathname: "/product/[id]",
+                  params: { id: String(item.id) },
+                } as any)
+              }
+              style={{ marginRight: 12 }}
+            >
+              <HomeFlowerCard item={item} />
+            </TouchableOpacity>
           )}
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 12, gap: 10 }}
-          style={{ marginBottom: 10 }}
-        />
-
-        {/* Trends & Popular now */}
-        <SectionHeader title="Trends & Popular now" />
-        <FlatList
-          horizontal
-          data={TRENDING}
-          keyExtractor={(i) => String(i.id)}
-          renderItem={({ item }) => <ProductCardSmall item={item} />}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 12, gap: 12 }}
+          contentContainerStyle={{ paddingHorizontal: 12 }}
           style={{ marginBottom: 16 }}
         />
 
-        {/* Halloween theme */}
-        <SectionHeader title="Halloween theme" withDot />
+        {/* Tulips (category=2) */}
+        <SectionHeader
+          title="Tulips"
+          onPressViewAll={() =>
+            router.push({ pathname: "/(tabs)/shop", params: { category: "2" } } as any)
+          }
+        />
         <FlatList
           horizontal
-          data={HALLOWEEN}
-          keyExtractor={(i) => String(i.id)}
-          renderItem={({ item }) => <ProductCardSmall item={item} />}
+          data={tulips}
+          keyExtractor={(it) => String(it.id)}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() =>
+                router.push({
+                  pathname: "/product/[id]",
+                  params: { id: String(item.id) },
+                } as any)
+              }
+              style={{ marginRight: 12 }}
+            >
+              <HomeFlowerCard item={item} />
+            </TouchableOpacity>
+          )}
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 12, gap: 12 }}
+          contentContainerStyle={{ paddingHorizontal: 12 }}
           style={{ marginBottom: 16 }}
         />
 
-        {/* Upcoming events banner */}
-        <SectionHeader title="Upcoming events" />
-        <Image
-          source={{ uri: "https://images.unsplash.com/photo-1486427944299-d1955d23e34d?w=1600" }}
-          style={styles.upcoming}
+        {/* Lilies (category=4) */}
+        <SectionHeader
+          title="Lilies"
+          onPressViewAll={() =>
+            router.push({ pathname: "/(tabs)/shop", params: { category: "4" } } as any)
+          }
         />
-        <View style={{ position: "relative", marginTop: -68, paddingHorizontal: 18 }}>
-          <Text style={{ color: "#fff", fontSize: 22, fontWeight: "800", textShadowColor: "#0006", textShadowRadius: 8 }}>
-            Magic Christmas
-          </Text>
-          <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600", textShadowColor: "#0006", textShadowRadius: 8 }}>
-            coming soon
-          </Text>
-        </View>
+        <FlatList
+          horizontal
+          data={lilies}
+          keyExtractor={(it) => String(it.id)}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() =>
+                router.push({
+                  pathname: "/product/[id]",
+                  params: { id: String(item.id) },
+                } as any)
+              }
+              style={{ marginRight: 12 }}
+            >
+              <HomeFlowerCard item={item} />
+            </TouchableOpacity>
+          )}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 12 }}
+          style={{ marginBottom: 16 }}
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -207,6 +325,61 @@ function ProductCardSmall({ item }: { item: Product }) {
     </View>
   );
 }
+
+// Home horizontal flower card (mirrors Shop ProductCard behaviour in compact form)
+function HomeFlowerCard({ item }: { item: Flower }) {
+  const { addToCart } = useCart();
+  const router = useRouter();
+  const priceText = useMemo(() => `${item.price.toLocaleString("vi-VN")} VND`, [item.price]);
+  const validImage = item.imageUrl?.startsWith("http");
+  const isOutOfStock = item.stock === 0;
+
+  const handleAddToCart = () => {
+    if (isOutOfStock) {
+      Alert.alert("Out of Stock", `${item.name} is currently out of stock.`, [{ text: "OK" }]);
+      return;
+    }
+    addToCart({ productId: String(item.id), name: item.name, price: item.price }, 1);
+    Alert.alert("Added to cart", `${item.name} has been added to your cart.`, [
+      { text: "View cart", onPress: () => router.push({ pathname: "/(tabs)/cart" } as any) },
+      { text: "Continue", style: "cancel" },
+    ]);
+  };
+
+  return (
+    <View style={[styles.productCard, { width: 200 }]}>
+      {validImage ? (
+        <Image source={{ uri: item.imageUrl }} style={[styles.productImg, { height: 110 }]} />
+      ) : (
+        <View style={[styles.productImg, styles.imagePlaceholder]}>
+          <Text style={{ color: COLORS.sub, fontSize: 12 }}>No image</Text>
+        </View>
+      )}
+      <Text numberOfLines={2} style={styles.productName}>{item.name}</Text>
+      <Text numberOfLines={1} style={{ color: COLORS.sub, fontSize: 12 }}>{item.description}</Text>
+      <Text style={styles.productPrice}>{priceText}</Text>
+      <TouchableOpacity
+        style={[styles.addBtn, { borderRadius: 12, marginTop: 8 }]}
+        onPress={handleAddToCart}
+        disabled={isOutOfStock}
+      >
+        <Text style={styles.addText}>{isOutOfStock ? "Out of stock" : "Add to cart"}</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+// category mock (copied from shop)
+const CATEGORY_OPTIONS = [
+  { id: 1, name: "Roses", image: "https://images.unsplash.com/photo-1509043759401-136742328bb3?w=400" },
+  { id: 5, name: "Orchids", image: "https://images.unsplash.com/photo-1468824357306-a439d58ccb1c?w=400" },
+  { id: 2, name: "Tulips", image: "https://images.unsplash.com/photo-1464965911892-8a99f4a06e0b?w=400" },
+  { id: 4, name: "Lilies", image: "https://images.unsplash.com/photo-1504198266285-165a3c76e0d3?w=400" },
+  { id: 6, name: "Sunflowers", image: "https://images.unsplash.com/photo-1502989642968-94fbdc9eace4?w=400" },
+  { id: 7, name: "Carnations", image: "https://images.unsplash.com/photo-1544551763-7ef4200b69c3?w=400" },
+  { id: 8, name: "Mixed", image: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=400" },
+  { id: 3, name: "Daisies", image: "https://images.unsplash.com/photo-1520975937573-5f7f4f0b4c04?w=400" },
+];
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
@@ -248,4 +421,107 @@ const styles = StyleSheet.create({
   productPrice: { marginTop: 4, color: COLORS.primary, fontWeight: "800" },
 
   upcoming: { width: width - 28, height: 180, marginHorizontal: 14, borderRadius: 16 },
+
+  // append these styles to styles object in this file:
+  catGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  catItem: { width: 74, alignItems: "center", padding: 8, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.card },
+  catItemActive: { borderColor: COLORS.primary, backgroundColor: "#e9f5ef" },
+  catImg: { width: 40, height: 40, borderRadius: 20, marginBottom: 6 },
+  catName: { fontSize: 12, color: COLORS.text },
+
+  // new styles for single row category pills
+  catPillSmall: {
+    width: 96,
+    height: 96,
+    backgroundColor: COLORS.card,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 8,
+  },
+  catPillSmallActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: "#e9f5ef",
+  },
+  catPillImg: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginBottom: 6,
+  },
+  catPillText: {
+    fontSize: 12,
+    color: COLORS.text,
+    textAlign: "center",
+  },
+  catPillTextActive: {
+    color: COLORS.dark,
+    fontWeight: "700",
+  },
+
+  // larger horizontal category pills
+  catPillLarge: {
+    width: 140,
+    height: 140,
+    backgroundColor: COLORS.card,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+  },
+  catPillLargeActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: "#e9f5ef",
+    shadowOpacity: 0.06,
+  },
+  catPillLargeImg: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    marginBottom: 10,
+  },
+  catPillLargeText: {
+    fontSize: 14,
+    color: COLORS.text,
+    textAlign: "center",
+    width: "100%",
+  },
+  catPillLargeTextActive: {
+    color: COLORS.dark,
+    fontWeight: "700",
+  },
+
+  // image placeholder style for invalid URLs
+  imagePlaceholder: {
+    backgroundColor: "#f0f0f0",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+
+  // add to cart button styles
+  addBtn: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+  },
+  addText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 14,
+  },
 });

@@ -27,13 +27,67 @@ export const aiService = {
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY as any);
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
+    // Detect language based on input
+    const isVietnamese = /[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]/i.test(input);
+    const isEnglish = /^[a-zA-Z\s\d\.,!?'-]+$/.test(input.trim());
+    
+    let detectedLanguage = 'English';
+    if (isVietnamese) {
+      detectedLanguage = 'Vietnamese';
+    } else if (!isEnglish) {
+      // Could be another language - let AI detect
+      detectedLanguage = 'the same language as the customer';
+    }
+
     const flowersText = (flowers || [])
-      .map((f: any) => `- ${f.name} (Loại: ${f.category}, Giá: ${f.price} VND, Mô tả: ${f.description})`)
+      .map((f: any) => `- ${f.name} (Category: ${f.category}, Price: ${f.price} VND, Description: ${f.description})`)
       .join('\n');
 
-    const historyText = (chatMessages || []).map((m: any) => `${m.sender === 'user' ? 'Người dùng' : 'AI'}: ${m.text}`).join('\n');
+    const historyText = (chatMessages || [])
+      .map((m: any) => `${m.sender === 'user' ? 'Customer' : 'AI'}: ${m.text}`)
+      .join('\n');
 
-    const prompt = `Bạn là trợ lý tư vấn hoa.\nDanh sách hoa hiện có:\n${flowersText}\n\nLịch sử chat:\n${historyText}\n\nCâu hỏi khách hàng: "${input}"\nNhiệm vụ: Đưa ra 1-2 loại hoa phù hợp và gợi ý mức giá. Trả lời thân thiện, ngắn gọn bằng tiếng Việt.`;
+    // Check if this is the first message (greeting)
+    const isFirstMessage = !chatMessages || chatMessages.length === 0;
+
+    let prompt = '';
+    
+    if (isFirstMessage) {
+      // First message: Always greet in English, then respond in detected language
+      prompt = `You are a friendly flower shop assistant.
+
+Available flowers:
+${flowersText}
+
+IMPORTANT INSTRUCTIONS:
+1. Start with a warm English greeting (e.g., "Hello! Welcome to Flowerfly 🌸")
+2. Then respond to the customer's question in ${detectedLanguage}
+3. Suggest 1-2 suitable flowers with prices
+4. Keep responses friendly, concise, and helpful
+5. Use emojis appropriately 🌺🌸💐
+
+Customer's first message: "${input}"
+
+Remember: Greet in English first, then continue in ${detectedLanguage}.`;
+    } else {
+      // Subsequent messages: Respond in the detected language
+      prompt = `You are a friendly flower shop assistant.
+
+Available flowers:
+${flowersText}
+
+Chat history:
+${historyText}
+
+IMPORTANT INSTRUCTIONS:
+1. Respond in ${detectedLanguage} (the same language the customer is using)
+2. Suggest 1-2 suitable flowers with prices when appropriate
+3. Keep responses friendly, concise, and helpful
+4. Use emojis appropriately 🌺🌸💐
+5. Be consistent with the language throughout the conversation
+
+Customer's question: "${input}"`;
+    }
 
     const result: any = await model.generateContent(prompt);
 
@@ -45,7 +99,13 @@ export const aiService = {
     if (typeof resp.text === 'function') return String(resp.text());
     if (typeof resp === 'string') return resp;
     if (typeof resp?.text === 'string') return resp.text;
-    if (Array.isArray(resp?.candidates) && resp.candidates[0]) return String(resp.candidates[0].text || resp.candidates[0].content || JSON.stringify(resp.candidates[0]));
+    if (Array.isArray(resp?.candidates) && resp.candidates[0]) {
+      return String(
+        resp.candidates[0].text || 
+        resp.candidates[0].content || 
+        JSON.stringify(resp.candidates[0])
+      );
+    }
 
     return String(JSON.stringify(resp));
   },

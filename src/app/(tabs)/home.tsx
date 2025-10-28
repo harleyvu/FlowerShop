@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 // import { useFonts } from "expo-font"; // <-- 1. XÓA DÒNG NÀY
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  Dimensions,
+  Alert, Dimensions,
   FlatList,
   Image,
   ScrollView,
@@ -11,10 +12,11 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-} from "react-native";
+  View
+} from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context"; // <-- 1. Thêm import
 import BannerCarousel from "../../components/BannerCarousel";
+import { useCart } from '../../contexts/CartContext';
 
 // ============ COLORS / THEME ============
 const COLORS = {
@@ -73,7 +75,45 @@ const { width } = Dimensions.get("window");
 export default function Home() {
   
   const router = useRouter();
+  const { items } = useCart();
+  const [pendingCartNotify, setPendingCartNotify] = useState(false);
   const [q, setQ] = useState("");
+
+  // On mount, check if we should show cart notification set during login
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const flag = await AsyncStorage.getItem('SHOW_CART_NOTIFICATION');
+        if (!mounted) return;
+        if (flag === '1') {
+          // clear the flag and wait for items to be available
+          await AsyncStorage.removeItem('SHOW_CART_NOTIFICATION');
+          setPendingCartNotify(true);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  // When cart items are loaded and we have a pending notification, show it
+  useEffect(() => {
+    if (!pendingCartNotify) return;
+    if (!items) return;
+    if (items.length > 0) {
+      Alert.alert(
+        'You have items in your cart',
+        `You have ${items.length} item${items.length > 1 ? 's' : ''} in your cart. Would you like to view your cart now?`,
+        [
+          { text: 'View cart', onPress: () => router.replace('/(tabs)/cart') },
+          { text: 'Continue', style: 'cancel' },
+        ]
+      );
+    }
+    setPendingCartNotify(false);
+  }, [pendingCartNotify, items, router]);
 
   const filteredTrending = useMemo(
     () => TRENDING.filter((p) => p.name.toLowerCase().includes(q.trim().toLowerCase())),

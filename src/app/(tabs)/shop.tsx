@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Image,
   StyleSheet,
@@ -137,8 +138,9 @@ export default function ShopScreen() {
 
 function ProductCard({ item }: { item: Flower }) {
   const { addToCart } = useCart();
+  const router = useRouter();
   const priceText = useMemo(
-    () => `${item.price.toLocaleString("vi-VN")} đ`,
+    () => `${item.price.toLocaleString("vi-VN")} VND`,
     [item.price]
   );
 
@@ -163,9 +165,17 @@ function ProductCard({ item }: { item: Flower }) {
         <Text style={styles.price}>{priceText}</Text>
         <TouchableOpacity
           style={styles.addBtn}
-          onPress={() =>
-            addToCart({ productId: String(item.id), name: item.name, price: item.price }, 1)
-          }
+          onPress={() => {
+            addToCart({ productId: String(item.id), name: item.name, price: item.price }, 1);
+            Alert.alert(
+              'Added to cart',
+              `${item.name} has been added to your cart.`,
+              [
+                { text: 'View cart', onPress: () => router.push({ pathname: '/(tabs)/cart' } as any) },
+                { text: 'Continue', style: 'cancel' },
+              ]
+            );
+          }}
         >
           <Text style={styles.addText}>Add to cart</Text>
         </TouchableOpacity>

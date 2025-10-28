@@ -2,13 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { restoreAuthToken } from "../../api/apiClient";
@@ -23,6 +23,59 @@ const COLORS = {
   bg: "#f6faf7",
   card: "#ffffff",
   border: "#e6eee9",
+};
+
+// 🧩 Enum định nghĩa trạng thái order (tích hợp ngay trong file)
+const OrderStatus = {
+  PendingConfirmation: 1,
+  Confirmed: 2,
+  PreparingOrder: 3,
+  OutForDelivery: 4,
+  Delivered: 5,
+  Cancelled: 6,
+  Refunded: 7,
+} as const;
+
+const getOrderStatusLabel = (status: number): string => {
+  switch (status) {
+    case OrderStatus.PendingConfirmation:
+      return "Pending Confirmation";
+    case OrderStatus.Confirmed:
+      return "Confirmed";
+    case OrderStatus.PreparingOrder:
+      return "Preparing Order";
+    case OrderStatus.OutForDelivery:
+      return "Out for Delivery";
+    case OrderStatus.Delivered:
+      return "Delivered";
+    case OrderStatus.Cancelled:
+      return "Cancelled";
+    case OrderStatus.Refunded:
+      return "Refunded";
+    default:
+      return "Unknown";
+  }
+};
+
+const getOrderStatusColor = (status: number): string => {
+  switch (status) {
+    case OrderStatus.PendingConfirmation:
+      return "#ffb84d"; // orange
+    case OrderStatus.Confirmed:
+      return "#27c16b"; // green
+    case OrderStatus.PreparingOrder:
+      return "#4da6ff"; // blue
+    case OrderStatus.OutForDelivery:
+      return "#33cccc"; // teal
+    case OrderStatus.Delivered:
+      return "#27c16b"; // green
+    case OrderStatus.Cancelled:
+      return "#ff6b6b"; // red
+    case OrderStatus.Refunded:
+      return "#999"; // gray
+    default:
+      return "#ccc";
+  }
 };
 
 export default function OrdersScreen() {
@@ -61,57 +114,21 @@ export default function OrdersScreen() {
     }, [fetchOrders])
   );
 
-  const renderStatusBadge = (status: number) => {
-    let bgColor = "#ccc";
-    let label = "Unknown";
-
-    switch (status) {
-      case 1:
-        bgColor = "#ffb84d"; // orange
-        label = "Pending Confirmation";
-        break;
-      case 2:
-        bgColor = "#27c16b"; // green
-        label = "Confirmed";
-        break;
-      case 3:
-        bgColor = "#4da6ff"; // blue
-        label = "Preparing Order";
-        break;
-      case 4:
-        bgColor = "#33cccc"; // teal
-        label = "Out for Delivery";
-        break;
-      case 5:
-        bgColor = "#27c16b"; // green
-        label = "Delivered";
-        break;
-      case 6:
-        bgColor = "#ff6b6b"; // red
-        label = "Cancelled";
-        break;
-      case 7:
-        bgColor = "#999"; // gray
-        label = "Refunded";
-        break;
-    }
-
-    return (
-      <View
-        style={{
-          backgroundColor: bgColor,
-          paddingHorizontal: 10,
-          paddingVertical: 4,
-          borderRadius: 8,
-          alignSelf: "flex-start",
-        }}
-      >
-        <Text style={{ color: "#fff", fontWeight: "600", fontSize: 12 }}>
-          {label}
-        </Text>
-      </View>
-    );
-  };
+  const renderStatusBadge = (status: number) => (
+    <View
+      style={{
+        backgroundColor: getOrderStatusColor(status),
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
+        alignSelf: "flex-start",
+      }}
+    >
+      <Text style={{ color: "#fff", fontWeight: "600", fontSize: 12 }}>
+        {getOrderStatusLabel(status)}
+      </Text>
+    </View>
+  );
 
   if (loading)
     return (
@@ -161,7 +178,13 @@ export default function OrdersScreen() {
             }
           >
             <View style={styles.card}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
                 <Text style={styles.orderId}>Order #{item.id}</Text>
                 {renderStatusBadge(item.status)}
               </View>
@@ -172,7 +195,9 @@ export default function OrdersScreen() {
                 <Text style={{ color: COLORS.sub }}>
                   Items: {item.items?.length ?? 0}
                 </Text>
-                <Text style={styles.totalText}>${item.total}</Text>
+                <Text style={styles.totalText}>
+                  {Number(item.total ?? 0).toLocaleString()} VND
+                </Text>
               </View>
             </View>
           </TouchableOpacity>

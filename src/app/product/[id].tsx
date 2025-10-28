@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useCart } from '../../contexts/CartContext';
 
 const COLORS = {
   primary: '#27c16b',
@@ -20,10 +21,12 @@ export default function ProductDetail() {
     id: string; name: string; description: string; price: string; imageUrl?: string;
   }>();
 
+  const { addToCart } = useCart();
+
   const [qty, setQty] = useState(1);
   const priceText = useMemo(() => {
     const p = Number(price ?? 0);
-    return `${p.toLocaleString('vi-VN')} đ`;
+    return `${p.toLocaleString('en-US')} VND`;
   }, [price]);
 
   const hasImage = imageUrl && imageUrl.startsWith('http');
@@ -55,8 +58,6 @@ export default function ProductDetail() {
         <View style={styles.card}>
           <Text style={styles.title} numberOfLines={2}>{name || 'No name'}</Text>
 
-          {/* Bỏ phần sao/review theo yêu cầu */}
-
           <Text style={styles.sectionLabel}>Composition:</Text>
           <Text style={styles.desc} numberOfLines={4}>{description || 'Updating...'}</Text>
 
@@ -72,7 +73,14 @@ export default function ProductDetail() {
 
           <Text style={styles.price}>{priceText}</Text>
 
-          <TouchableOpacity style={styles.addBtn} onPress={() => {}}>
+          <TouchableOpacity style={styles.addBtn} onPress={() => {
+            const pid = String(id ?? '');
+            addToCart({ productId: pid, name: name ?? 'Product', price: Number(price ?? 0) }, qty);
+            Alert.alert('Added to cart', `${name ?? 'Product'} has been added to your cart`, [
+              { text: 'Continue shopping', style: 'cancel' },
+              { text: 'View cart', onPress: () => router.push({ pathname: '/cart' } as any) },
+            ]);
+          }}>
             <Text style={styles.addText}>Add to cart</Text>
           </TouchableOpacity>
         </View>

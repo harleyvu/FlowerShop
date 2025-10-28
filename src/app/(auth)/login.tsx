@@ -1,8 +1,10 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFonts } from "expo-font";
 import { Link, useRouter } from "expo-router";
 import React, { useState } from "react";
-import { handleLogin } from "../../controllers/userController";
 import { Alert } from "react-native";
+import { useCart } from "../../contexts/CartContext";
+import { handleLogin } from "../../controllers/userController";
 
 import {
   ActivityIndicator,
@@ -29,25 +31,44 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   
-const [loading, setLoading] = useState(false);
+  const { items } = useCart();
+
+  const [loading, setLoading] = useState(false);
 
 const onLogin = async () => {
   if (!email || !password) {
     Alert.alert("Missing info", "Please enter email and password");
     return;
   }
+
   try {
     setLoading(true);
-    const res = await handleLogin(email, password);
-    Alert.alert("Success", "Welcome back!");
-    router.replace("/(tabs)/home"); // chuyển vào Home
+    const { user, token } = await handleLogin(email, password);
+
+    // Kiểm tra role
+    if (user?.role === 1) {
+      Alert.alert("Welcome Admin", "Redirecting to admin dashboard...");
+      router.replace("/admin/dashboard");
+    } else {
+      Alert.alert("Welcome", `Hello ${user?.userName || "User"}!`);
+        router.replace("/(tabs)/home");
+
+        // If the user has items in their cart (persisted locally), set a flag
+        // so Home can show the notification after navigation.
+        try {
+          if (items && items.length > 0) {
+            await AsyncStorage.setItem('SHOW_CART_NOTIFICATION', '1');
+          }
+        } catch {
+          // ignore
+        }
+    }
   } catch (err: any) {
     Alert.alert("Login failed", err.message || "Unable to login");
   } finally {
     setLoading(false);
   }
 };
-
 
 
   return (

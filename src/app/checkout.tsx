@@ -2,20 +2,20 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { restoreAuthToken } from "../../api/apiClient";
-import * as orderApi from "../../api/orderModel";
-import { useCart, type CartItem } from "../../contexts/CartContext";
-import { restoreUser } from "../../controllers/userController";
+import { restoreAuthToken } from "../api/apiClient";
+import * as orderApi from "../api/orderModel";
+import { useCart, type CartItem } from "../contexts/CartContext";
+import { restoreUser } from "../controllers/userController";
 
 const COLORS = {
   primary: "#27c16b",
@@ -148,7 +148,7 @@ export default function CheckoutScreen() {
             <Text style={{ flex: 1 }}>
               {item.name} × {item.quantity}
             </Text>
-            <Text>{item.price * item.quantity} $</Text>
+            <Text>{item.price * item.quantity} VND</Text>
           </View>
         )}
         ListEmptyComponent={
@@ -158,7 +158,7 @@ export default function CheckoutScreen() {
           <>
             <View style={styles.summary}>
               <Text style={styles.totalText}>Total:</Text>
-              <Text style={styles.totalValue}>{total} $</Text>
+              <Text style={styles.totalValue}>{total} VND</Text>
             </View>
             <TouchableOpacity
               style={styles.checkoutBtn}

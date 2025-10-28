@@ -19,13 +19,15 @@ import { handleRegister } from "../../controllers/userController"; // <<< ADD
 
 /* BACKGROUND */
 const bg = require("../../assets/background.png");
-/* FONT: Pacifico-Regular.ttf placed at src/assets/fonts/Pacifico-Regular.ttf */
+/* FONT: Pacifico-Regular.ttf placed tại src/assets/fonts/Pacifico-Regular.ttf */
 const pacificoFont = require("../../assets/fonts/Pacifico-Regular.ttf");
 
 export default function SignUp() {
   const router = useRouter(); // <<< ADD
   const [fontsLoaded] = useFonts({ Pacifico: pacificoFont });
+  const router = useRouter();
 
+  // State cho form
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -55,6 +57,32 @@ export default function SignUp() {
   };
 
   if (!fontsLoaded) return <ActivityIndicator style={{ flex: 1 }} />;
+
+  // Hàm xử lý đăng ký
+  const handleSignUp = async () => {
+    if (!firstName || !lastName || !email || !password) {
+      Alert.alert("Missing info", "Please fill in all fields.");
+      return;
+    }
+    if (password !== confirm) {
+      Alert.alert("Password mismatch", "Passwords do not match.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await handleRegister(firstName, lastName, email, password);
+
+      Alert.alert("Success", "Account created successfully!", [
+        { text: "OK", onPress: () => router.replace("/login") },
+      ]);
+    } catch (err: any) {
+      console.error(err);
+      Alert.alert("Error", err.message || "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <ImageBackground source={bg} style={styles.bg} resizeMode="cover">
@@ -132,7 +160,7 @@ export default function SignUp() {
               </Link>
 
               <View style={styles.signupWrap}>
-                <Text style={styles.smallText}>Already have account ? </Text>
+                <Text style={styles.smallText}>Already have an account? </Text>
                 <Link href="login" style={styles.signUpLink}>
                   <Text style={styles.signUpText}>Log in</Text>
                 </Link>
@@ -160,7 +188,7 @@ const styles = StyleSheet.create({
     fontSize: 36,
     color: "#1f7a4c",
     marginBottom: 12,
-    fontFamily: "Pacifico", // <-- custom font applied here
+    fontFamily: "Pacifico",
   },
   card: {
     width: "100%",

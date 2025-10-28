@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useCart } from '../contexts/CartContext';
 
 type ProductCardProps = {
@@ -9,6 +10,7 @@ type ProductCardProps = {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
+  const router = useRouter();
   const [qty, setQty] = useState(1);
 
   const imageUri = product.image || product.imageUrl || product.photo || '';
@@ -18,6 +20,11 @@ export default function ProductCard({ product }: ProductCardProps) {
   function handleAdd() {
     addToCart({ productId: pid, name: product.name, price }, qty);
     setQty(1);
+    // show action to view checkout or continue
+    Alert.alert('Added to cart', `${product.name} has added to cartỏ`, [
+      { text: 'Continue buy', style: 'cancel' },
+      { text: 'Look at the cart', onPress: () => router.push({ pathname: '/cart' } as any) },
+    ]);
   }
 
   return (

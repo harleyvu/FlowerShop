@@ -11,7 +11,7 @@ export default function AIChatBubble({ flowers }: { flowers: any[] }) {
   const [loading, setLoading] = useState(false);
   const flowersText = useMemo(() => {
     return flowers
-      .map((f) => `- ${f.name} (Loại: ${f.category}, Giá: ${f.price} VND)`)
+      .map((f) => `- ${f.name} (Category: ${f.category}, Price: ${f.price} VND)`)
       .join('\n');
   }, [flowers]);
 
@@ -23,10 +23,10 @@ export default function AIChatBubble({ flowers }: { flowers: any[] }) {
     setLoading(true);
     try {
       const text = await aiService.askAI(userMsg.text, flowers, msgs);
-      const aiMsg: Msg = { id: String(Date.now() + 1), sender: 'ai', text: text ?? 'Không có phản hồi' };
+      const aiMsg: Msg = { id: String(Date.now() + 1), sender: 'ai', text: text ?? 'No response' };
       setMsgs((s) => [aiMsg, ...s]);
     } catch (err: any) {
-      const aiMsg: Msg = { id: String(Date.now() + 2), sender: 'ai', text: `Lỗi AI: ${err?.message ?? 'unknown'}` };
+      const aiMsg: Msg = { id: String(Date.now() + 2), sender: 'ai', text: `AI Error: ${err?.message ?? 'unknown'}` };
       setMsgs((s) => [aiMsg, ...s]);
     } finally {
       setLoading(false);
@@ -48,9 +48,9 @@ export default function AIChatBubble({ flowers }: { flowers: any[] }) {
           style={styles.chatWrap}
         >
           <View style={styles.header}>
-            <Text style={{ fontWeight: '800' }}>Trợ lý AI</Text>
+            <Text style={{ fontWeight: '800' }}>AI Assistant</Text>
             <TouchableOpacity onPress={() => setVisible(false)}>
-              <Text style={{ color: '#27c16b' }}>Đóng</Text>
+              <Text style={{ color: '#27c16b' }}>Close</Text>
             </TouchableOpacity>
           </View>
 
@@ -70,11 +70,11 @@ export default function AIChatBubble({ flowers }: { flowers: any[] }) {
             <TextInput
               value={input}
               onChangeText={setInput}
-              placeholder="Hỏi trợ lý..."
+              placeholder="Ask the assistant..."
               style={styles.input}
             />
             <TouchableOpacity style={styles.sendBtn} onPress={send} disabled={loading}>
-              {loading ? <ActivityIndicator color="#fff" /> : <Text style={{ color: '#fff' }}>Gửi</Text>}
+              {loading ? <ActivityIndicator color="#fff" /> : <Text style={{ color: '#fff' }}>Send</Text>}
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>

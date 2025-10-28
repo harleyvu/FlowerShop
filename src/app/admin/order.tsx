@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { apiClient } from "../../api/apiClient";
 
@@ -19,7 +19,7 @@ export default function OrderScreen() {
   const [delivery, setDelivery] = useState<any | null>(null);
   const [loadingDelivery, setLoadingDelivery] = useState(false);
 
-  // 🧭 Load danh sách order
+  // 🧭 Load order list
   useEffect(() => {
     (async () => {
       try {
@@ -34,30 +34,29 @@ export default function OrderScreen() {
   }, []);
 
   async function handleUpdateOrderStatus(orderId: number, newStatus: number) {
-  try {
-    await apiClient.put(`/api/Order/${orderId}/status`, {
-      status: newStatus,
-      confirmedAt: new Date().toISOString(),
-    });
-    Alert.alert("✅ Updated", "Order status updated successfully.");
-    // reload lại orders và delivery
-    const updatedOrders = await apiClient.get("/api/Order");
-    setOrders(updatedOrders.data);
-    await fetchDelivery(orderId);
-  } catch (err: any) {
-    Alert.alert("❌ Error", err.message || "Failed to update order status.");
+    try {
+      await apiClient.put(`/api/Order/${orderId}/status`, {
+        status: newStatus,
+        confirmedAt: new Date().toISOString(),
+      });
+      Alert.alert("✅ Success", "Order status updated successfully.");
+      // Reload orders and delivery
+      const updatedOrders = await apiClient.get("/api/Order");
+      setOrders(updatedOrders.data);
+      await fetchDelivery(orderId);
+    } catch (err: any) {
+      Alert.alert("❌ Error", err.message || "Failed to update order status.");
+    }
   }
-}
 
-
-  // 🧭 Khi mở order → fetch delivery theo orderId
+  // 🧭 Fetch delivery by orderId when opening order
   async function fetchDelivery(orderId: number) {
     try {
       setLoadingDelivery(true);
       const res = await apiClient.get(`/api/Delivery/by-order/${orderId}`);
       setDelivery(res.data);
     } catch {
-      setDelivery(null); // chưa có delivery
+      setDelivery(null); // No delivery yet
     } finally {
       setLoadingDelivery(false);
     }
@@ -80,7 +79,7 @@ export default function OrderScreen() {
         status: newStatus,
         deliveredAt: new Date().toISOString(),
       });
-      Alert.alert("✅ Updated", "Delivery status has been updated.");
+      Alert.alert("✅ Success", "Delivery status has been updated.");
       await fetchDelivery(orderId);
     } catch (err: any) {
       Alert.alert("❌ Error", err.message || "Failed to update status.");
@@ -99,7 +98,7 @@ export default function OrderScreen() {
       <Text style={styles.orderId}>Order #{item.id}</Text>
       <Text style={styles.line}>Sender: {item.senderName}</Text>
       <Text style={styles.line}>Recipient: {item.recipient}</Text>
-      <Text style={styles.line}>Total: ${item.total.toFixed(2)}</Text>
+      <Text style={styles.line}>Total: {item.total.toFixed(2)}VND</Text>
       <Text style={[styles.status, getOrderStatusStyle(item.status)]}>
         {mapOrderStatus(item.status)}
       </Text>
@@ -114,6 +113,10 @@ export default function OrderScreen() {
     );
   }
 
+  // Check if payment is paid
+  const paymentStatus = selectedOrder?.payment?.status;
+  const isPaid = paymentStatus === 2;
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Order Management</Text>
@@ -125,7 +128,7 @@ export default function OrderScreen() {
         contentContainerStyle={{ paddingBottom: 20 }}
       />
 
-      {/* Modal hiển thị chi tiết + Delivery */}
+      {/* Modal to display details + Delivery */}
       <Modal visible={!!selectedOrder} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -136,7 +139,7 @@ export default function OrderScreen() {
               <Text>Phone: {selectedOrder?.senderPhone}</Text>
               <Text>Recipient: {selectedOrder?.recipient}</Text>
               <Text>
-                Delivery date:{" "}
+                Delivery Date:{" "}
                 {new Date(selectedOrder?.deliveryDate).toLocaleDateString()}
               </Text>
 
@@ -145,30 +148,31 @@ export default function OrderScreen() {
                 <View key={it.id} style={styles.itemRow}>
                   <Text>{it.flowerName}</Text>
                   <Text>x{it.quantity}</Text>
-                  <Text>${it.lineTotal}</Text>
+                  <Text>{it.lineTotal}VND</Text>
                 </View>
               ))}
 
               <Text style={styles.sectionTitle}>Payment:</Text>
-              <Text>Method: {mapPaymentMethod(selectedOrder?.payment?.method)}</Text>
-              <Text>Amount: ${selectedOrder?.payment?.amount}</Text>
+              <Text>
+                Method: {isPaid ? "Momo" : mapPaymentMethod(selectedOrder?.payment?.method)}
+              </Text>
+              <Text>Amount: {selectedOrder?.payment?.amount}VND</Text>
               <Text>Status: {mapPaymentStatus(selectedOrder?.payment?.status)}</Text>
 
               <Text style={styles.sectionTitle}>Update Order Status:</Text>
-<View style={styles.statusButtons}>
-  {[1, 2, 3, 4, 5, 6, 7].map((s) => (
-    <TouchableOpacity
-      key={s}
-      style={styles.statusBtn}
-      onPress={() => handleUpdateOrderStatus(selectedOrder.id, s)}
-    >
-      <Text style={{ color: "#fff", fontSize: 12 }}>
-        {mapOrderStatus(s)}
-      </Text>
-    </TouchableOpacity>
-  ))}
-</View>
-
+              <View style={styles.statusButtons}>
+                {[1, 2, 3, 4, 5, 6, 7].map((s) => (
+                  <TouchableOpacity
+                    key={s}
+                    style={styles.statusBtn}
+                    onPress={() => handleUpdateOrderStatus(selectedOrder.id, s)}
+                  >
+                    <Text style={{ color: "#fff", fontSize: 12 }}>
+                      {mapOrderStatus(s)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
 
               {/* 🚚 DELIVERY SECTION */}
               <Text style={styles.sectionTitle}>Delivery:</Text>
@@ -347,5 +351,4 @@ const styles = StyleSheet.create({
     padding: 6,
     borderRadius: 6,
   },
-  
 });

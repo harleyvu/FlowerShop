@@ -26,7 +26,7 @@ export default function ProductDetail() {
   const [qty, setQty] = useState(1);
   const priceText = useMemo(() => {
     const p = Number(price ?? 0);
-    return `${p.toLocaleString('vi-VN')} đ`;
+    return `${p.toLocaleString('en-US')} VND`;
   }, [price]);
 
   const hasImage = imageUrl && imageUrl.startsWith('http');
@@ -58,8 +58,6 @@ export default function ProductDetail() {
         <View style={styles.card}>
           <Text style={styles.title} numberOfLines={2}>{name || 'No name'}</Text>
 
-          {/* Bỏ phần sao/review theo yêu cầu */}
-
           <Text style={styles.sectionLabel}>Composition:</Text>
           <Text style={styles.desc} numberOfLines={4}>{description || 'Updating...'}</Text>
 
@@ -76,12 +74,11 @@ export default function ProductDetail() {
           <Text style={styles.price}>{priceText}</Text>
 
           <TouchableOpacity style={styles.addBtn} onPress={() => {
-            const qty = 1;
             const pid = String(id ?? '');
             addToCart({ productId: pid, name: name ?? 'Product', price: Number(price ?? 0) }, qty);
-            Alert.alert('Added to cart', `${name ?? 'Sản phẩm'} đã được thêm vào giỏ`, [
-              { text: 'Tiếp tục mua', style: 'cancel' },
-              { text: 'Xem giỏ hàng', onPress: () => router.push({ pathname: '/cart' } as any) },
+            Alert.alert('Added to cart', `${name ?? 'Product'} has been added to your cart`, [
+              { text: 'Continue shopping', style: 'cancel' },
+              { text: 'View cart', onPress: () => router.push({ pathname: '/cart' } as any) },
             ]);
           }}>
             <Text style={styles.addText}>Add to cart</Text>

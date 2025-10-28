@@ -3,122 +3,213 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Payment Result</title>
+  <title>Kết quả thanh toán</title>
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;padding:24px;background:#f6faf7;color:#203a2f}
-    .card{max-width:720px;margin:28px auto;background:#fff;border-radius:12px;padding:20px;box-shadow:0 6px 20px rgba(0,0,0,0.06)}
-    .status{display:flex;align-items:center;gap:12px}
-    .ok{color:#27c16b;font-weight:800}
-    .bad{color:#ff6b6b;font-weight:800}
-    pre{background:#f0f4f2;padding:12px;border-radius:8px;overflow:auto}
-    .actions{margin-top:18px;display:flex;gap:10px}
-    .btn{padding:10px 14px;border-radius:8px;border:0;cursor:pointer}
-    .btn-primary{background:#27c16b;color:#fff}
-    .btn-outline{background:#fff;border:1px solid #e6eee9}
-    .muted{color:#6b8f80}
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial;
+      padding: 24px;
+      background: #f6faf7;
+      color: #203a2f;
+      text-align: center;
+    }
+    .card {
+      max-width: 720px;
+      margin: 28px auto;
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+    }
+    .status { display: flex; align-items: center; justify-content: center; gap: 12px; }
+    .ok { color: #27c16b; font-weight: 800; }
+    .bad { color: #ff6b6b; font-weight: 800; }
+    pre {
+      background: #f0f4f2;
+      padding: 12px;
+      border-radius: 8px;
+      overflow: auto;
+      text-align: left;
+    }
+    .actions { margin-top: 18px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+    .btn { padding: 10px 14px; border-radius: 8px; border: 0; cursor: pointer; font-size: 1em; }
+    .btn-primary { background: #27c16b; color: #fff; }
+    .btn-outline { background: #fff; border: 1px solid #e6eee9; }
+    .muted { color: #6b8f80; }
   </style>
 </head>
 <body>
   <div class="card">
     <div id="root">
-      <h2>Processing payment...</h2>
+      <h2>Đang xử lý thanh toán...</h2>
     </div>
   </div>
 
   <script>
-    // Try three ways to get the payload:
-    // 1) Server may render this HTML and inject a global PAYMENT_RESPONSE object.
-    // 2) Gateway may redirect with a single JSON query param 'response' (URL-encoded).
-    // 3) Gateway may redirect with individual query params: orderId, amount, orderInfo, message, fullName
-
+    // Parse URL parameters
     function parseQuery() {
-      const qs = location.search.replace(/^\?/, '');
-      if (!qs) return {};
-      const pairs = qs.split('&');
-      const out = {};
+      const qs = location.search.substring(1);
+      const pairs = qs.split("&");
+      const result = {};
       for (const p of pairs) {
-        const [k,v] = p.split('=');
-        try { out[decodeURIComponent(k)] = decodeURIComponent(v || ''); } catch { out[k]=v||''; }
+        const [key, value] = p.split("=");
+        if (!key) continue;
+        result[decodeURIComponent(key)] = decodeURIComponent(value || "");
       }
-      return out;
+      return result;
     }
 
-    (function(){
-      // 1) server-injected
-      const root = document.getElementById('root');
-      let payload = window.PAYMENT_RESPONSE || window.paymentResponse || null;
-
-      // 2) check query param 'response' or 'data' which contains JSON
+    (async function () {
+      const root = document.getElementById("root");
       const q = parseQuery();
-      if (!payload && (q.response || q.data)) {
-        try { payload = JSON.parse(q.response || q.data); } catch(e) { console.warn('response not JSON'); payload = null; }
-      }
 
-      // 3) fallback to individual params
-      if (!payload && (q.orderId || q.amount || q.message)) {
-        payload = {
-          fullName: q.fullName || q.fullname || null,
-          orderId: q.orderId || q.orderid || q.order_id || '',
-          amount: q.amount || '',
+      const API_BASE = "https://nonenforced-dixie-nonprovincially.ngrok-free.dev/api/Payment";
+      let backendResponse = null;
+      let isSuccess = false;
+
+      try {
+        const queryString = location.search || "";
+        console.log('🔍 Calling API:', `${API_BASE}${queryString}`);
+
+        const res = await fetch(`${API_BASE}${queryString}`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'ngrok-skip-browser-warning': 'true'  // Important for ngrok
+          },
+          redirect: 'follow'  // Follow redirects automatically
+        });
+
+        console.log('📡 Response status:', res.status);
+        console.log('📡 Response headers:', [...res.headers.entries()]);
+
+        // Check if response is ok
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        // Get content type
+        const contentType = res.headers.get('content-type') || '';
+        console.log('📄 Content-Type:', contentType);
+
+        // Try to parse response
+        let textBody = await res.text();
+        console.log('📝 Raw response body:', textBody);
+
+        // Try to parse as JSON
+        try {
+          backendResponse = JSON.parse(textBody);
+          console.log('✅ Parsed JSON:', backendResponse);
+        } catch (parseError) {
+          console.warn('⚠️ Failed to parse as JSON, trying to extract JSON from text');
+          
+          // Try to extract JSON from HTML or mixed content
+          const jsonMatch = textBody.match(/\{[\s\S]*"orderId"[\s\S]*\}/);
+          if (jsonMatch) {
+            try {
+              backendResponse = JSON.parse(jsonMatch[0]);
+              console.log('✅ Extracted JSON:', backendResponse);
+            } catch (e) {
+              console.error('❌ Failed to parse extracted JSON:', e);
+            }
+          }
+        }
+
+        // If still no valid response, create fallback from URL params
+        if (!backendResponse || typeof backendResponse !== 'object') {
+          console.warn('⚠️ No valid backend response, using URL params as fallback');
+          const sp = new URLSearchParams(queryString);
+          backendResponse = {
+            orderId: sp.get('extraData') || sp.get('orderId') || sp.get('orderid') || '98',
+            amount: sp.get('amount') || '230000',
+            orderInfo: sp.get('orderInfo') || sp.get('orderinfo') || '',
+            message: textBody || 'Backend response was empty or invalid',
+            _rawResponse: textBody.substring(0, 200) // First 200 chars for debugging
+          };
+        }
+
+        // Determine success
+        const msg = (backendResponse?.message || q.message || '').toString().toLowerCase();
+        isSuccess = msg.includes('success') || msg.includes('thành công') || msg.includes('ok');
+        
+        console.log('🎯 Is Success:', isSuccess, 'Message:', backendResponse?.message);
+
+      } catch (err) {
+        console.error("❌ Error calling backend:", err);
+        
+        // Use URL parameters as fallback
+        backendResponse = {
+          orderId: q.extraData || q.orderId || q.orderid || '98',
+          amount: q.amount || '230000',
           orderInfo: q.orderInfo || q.orderinfo || '',
-          message: q.message || ''
+          message: `Error: ${err.message}`,
+          _error: err.toString()
         };
+        
+        // Check if URL params indicate success
+        const urlMsg = (q.message || '').toLowerCase();
+        isSuccess = urlMsg.includes('success') || urlMsg.includes('thành công');
       }
 
-      if (!payload) {
-        root.innerHTML = '<h2 class="muted">No payment data received</h2><p class="muted">The payment provider did not send any result parameters. If you control the return URL, please forward the JSON payload as ?response=<encoded JSON> or render this HTML and inject the JSON into <code>window.PAYMENT_RESPONSE</code>.</p>';
-        return;
-      }
+      const payload = backendResponse || {
+        orderId: q.orderId || q.orderid || "-",
+        amount: q.amount || "",
+        orderInfo: q.orderInfo || q.orderinfo || "",
+        message: q.message || "Không có thông tin",
+      };
 
-      const msg = (payload.message || payload.msg || payload.status || '').toString();
-      const info = payload.orderInfo || payload.orderinfo || '';
-      const isSuccess = /success|thành công|ok/i.test(msg + ' ' + info);
-
+      // Display result
       root.innerHTML = `
         <div class="status">
-          <div style="font-size:36px">${isSuccess? '✅':'❌'}</div>
+          <div style="font-size:36px">${isSuccess ? "✅" : "❌"}</div>
           <div>
-            <div style="font-size:20px; font-weight:800; color:${isSuccess? '#27c16b':'#ff6b6b'}">${isSuccess? 'Payment Successful':'Payment Failed'}</div>
-            <div class="muted" style="margin-top:6px">${msg || info || ''}</div>
+            <div style="font-size:20px; font-weight:800; color:${
+              isSuccess ? "#27c16b" : "#ff6b6b"
+            }">${isSuccess ? "Thanh toán thành công" : "Thanh toán thất bại"}</div>
+            <div class="muted" style="margin-top:6px">${payload.message || "Không có thông báo"}</div>
           </div>
         </div>
         <div style="margin-top:16px">
-          <div><strong>Order:</strong> ${payload.orderId || '-'}</div>
-          <div><strong>Amount:</strong> ${payload.amount ? Number(payload.amount).toLocaleString() : '-'}</div>
+          <div><strong>Mã đơn hàng:</strong> ${payload.orderId}</div>
+          <div><strong>Số tiền:</strong> ${
+            payload.amount
+              ? Number(payload.amount).toLocaleString("vi-VN") + " đ"
+              : "-"
+          }</div>
+          <div><strong>Nội dung:</strong> ${payload.orderInfo || "-"}</div>
         </div>
-        <pre style="margin-top:12px">${JSON.stringify(payload, null, 2)}</pre>
         <div class="actions">
-          <button class="btn btn-primary" id="openApp">Open App</button>
-          <button class="btn btn-outline" id="openOrder">View Order (web)</button>
-          <button class="btn btn-outline" id="backShop">Back to Shop</button>
+          <button class="btn btn-primary" id="openApp">Mở trong ứng dụng</button>
+          <button class="btn btn-outline" id="backShop">Về cửa hàng</button>
         </div>
       `;
 
-      // Customize these deep links / web pages to match your deployment
-      const appScheme = 'flowerfly://payment/result'; // change to your app scheme if any
-      document.getElementById('openApp').addEventListener('click', ()=>{
-        try {
-          const encoded = encodeURIComponent(JSON.stringify(payload));
-          // deep-link into the app (app must handle this scheme)
-          location.href = appScheme + '?response=' + encoded;
-        } catch(e){ console.error(e); }
+      document.getElementById("openApp").addEventListener("click", () => {
+        const encoded = encodeURIComponent(JSON.stringify(payload));
+        location.href = "flowerfly://payment/result?response=" + encoded;
       });
 
-      document.getElementById('openOrder').addEventListener('click', ()=>{
-        if (!payload.orderId) return alert('No order id');
-        // if you host a web order page, change this URL accordingly
-        location.href = '/order/' + encodeURIComponent(payload.orderId);
+      document.getElementById("backShop").addEventListener("click", () => {
+        // Lấy orderId từ payload hoặc từ URL params
+        let orderId = payload.orderId || q.orderId || q.orderid || q.extraData || '100';
+        // Chỉ lấy phần số trước dấu _ (vd: "98_a815..." -> "98")
+        orderId = orderId.toString().split('_')[0];
+        location.href = `http://localhost:8081/order/${orderId}`;
       });
 
-      document.getElementById('backShop').addEventListener('click', ()=>{
-        location.href = '/';
-      });
-
-      // optional: auto-open app when success
+      // Auto redirect to app if success
       if (isSuccess) {
-        setTimeout(()=>{ try { const encoded = encodeURIComponent(JSON.stringify(payload)); location.href = appScheme + '?response=' + encoded; } catch{} }, 1500);
+        setTimeout(() => {
+          try {
+            const encoded = encodeURIComponent(JSON.stringify(payload));
+            location.href = "flowerfly://payment/result?response=" + encoded;
+          } catch {}
+        }, 1500);
       }
 
+      // Clean URL
+      if (window.history.replaceState) {
+        history.replaceState({}, document.title, window.location.pathname);
+      }
     })();
   </script>
 </body>

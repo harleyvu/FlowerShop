@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    Image,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Image,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { apiClient } from "../../api/apiClient";
 
@@ -159,7 +159,7 @@ async function handleDeleteFlower(id: number) {
       }}
     >
       <Text style={styles.name}>{item.name}</Text>
-      <Text>Price: {item.price.toFixed(2)}đ</Text>
+      <Text>Price: {item.price.toFixed(2)}VND</Text>
       <Text>Stock: {item.stock}</Text>
       <Text>Category: {flowerCategories[item.category as number] || "Unknown"}</Text>
     </TouchableOpacity>

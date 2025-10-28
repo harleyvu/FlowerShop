@@ -148,7 +148,7 @@ export default function CheckoutScreen() {
             <Text style={{ flex: 1 }}>
               {item.name} × {item.quantity}
             </Text>
-            <Text>{item.price * item.quantity} đ</Text>
+            <Text>{item.price * item.quantity} VND</Text>
           </View>
         )}
         ListEmptyComponent={
@@ -158,7 +158,7 @@ export default function CheckoutScreen() {
           <>
             <View style={styles.summary}>
               <Text style={styles.totalText}>Total:</Text>
-              <Text style={styles.totalValue}>{total} đ</Text>
+              <Text style={styles.totalValue}>{total} VND</Text>
             </View>
             <TouchableOpacity
               style={styles.checkoutBtn}

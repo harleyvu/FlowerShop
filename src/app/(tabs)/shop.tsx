@@ -140,7 +140,7 @@ function ProductCard({ item }: { item: Flower }) {
   const { addToCart } = useCart();
   const router = useRouter();
   const priceText = useMemo(
-    () => `${item.price.toLocaleString("vi-VN")} đ`,
+    () => `${item.price.toLocaleString("vi-VN")} VND`,
     [item.price]
   );
 

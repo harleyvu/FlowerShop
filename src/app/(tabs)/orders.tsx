@@ -196,7 +196,7 @@ export default function OrdersScreen() {
                   Items: {item.items?.length ?? 0}
                 </Text>
                 <Text style={styles.totalText}>
-                  {Number(item.total ?? 0).toLocaleString()} đ
+                  {Number(item.total ?? 0).toLocaleString()} VND
                 </Text>
               </View>
             </View>

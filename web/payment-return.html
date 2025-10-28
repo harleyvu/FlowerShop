@@ -62,106 +62,102 @@
       const root = document.getElementById("root");
       const q = parseQuery();
 
-      // Gọi API xác nhận giao dịch từ backend
-      // Gọi API xác nhận giao dịch từ backend
-const API_BASE = "https://nonenforced-dixie-nonprovincially.ngrok-free.dev/api/Payment";
-let backendResponse = null;
-let isSuccess = false;
+      const API_BASE = "https://nonenforced-dixie-nonprovincially.ngrok-free.dev/api/Payment";
+      let backendResponse = null;
+      let isSuccess = false;
 
-  try {
-    // IMPORTANT: forward the exact query string MoMo sent (like ?errorCode=...&amount=...&extraData=...)
-    const queryString = location.search || ""; // includes leading '?', or empty
-
-    const res = await fetch(`${API_BASE}${queryString}`, {
-      method: "GET",
-    });
-
-    // Try to parse JSON even if server sets a non-json content-type (some endpoints return JSON with text/html)
-    let textBody = null;
-    try {
-      // Prefer json() but fall back to text and try JSON.parse
-      backendResponse = await res.json();
-    } catch (e) {
-      // json() failed — try reading text and parse if possible
       try {
-        textBody = await res.text();
-        // try to locate JSON inside HTML (common when server renders an HTML page that contains JSON payload)
-        const maybeJson = (function () {
-          // direct JSON
-          try { return JSON.parse(textBody); } catch {}
-          // try to find a JSON object in the HTML
-          const m = textBody.match(/\{\s*"orderId"[\s\S]*\}/m);
-          if (m) {
-            try { return JSON.parse(m[0]); } catch {}
-          }
-          return null;
-        })();
-        if (maybeJson) backendResponse = maybeJson;
-      } catch (e2) {
-        console.warn('Failed to read backend text response', e2);
-      }
-    }
+        const queryString = location.search || "";
+        console.log('🔍 Calling API:', `${API_BASE}${queryString}`);
 
-    // If we still don't have backendResponse, build a fallback using query params and optionally the raw text body
-    if (!backendResponse) {
-      const sp = new URLSearchParams(queryString);
-      backendResponse = {
-        orderId: sp.get('extraData') || sp.get('orderId') || sp.get('orderid') || '-',
-        amount: sp.get('amount') || '',
-        message: textBody ? `Backend returned non-JSON response. See console.` : `No response body from backend.`,
-      };
-      if (textBody) backendResponse._raw = textBody;
-    }
+        const res = await fetch(`${API_BASE}${queryString}`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'ngrok-skip-browser-warning': 'true'  // Important for ngrok
+          },
+          redirect: 'follow'  // Follow redirects automatically
+        });
 
-  // determine success from backendResponse.message (fallback to MoMo message if not present)
-  let msg = (backendResponse?.message || (new URLSearchParams(queryString)).get("message") || "").toString();
-  isSuccess = /success|thành công|ok/i.test(msg);
+        console.log('📡 Response status:', res.status);
+        console.log('📡 Response headers:', [...res.headers.entries()]);
 
-  // If backend returned non-JSON HTML (we logged that earlier) but the DB was updated,
-  // try to fetch the order directly to confirm payment status.
-  try {
-    const looksLikeHtmlResponse = typeof backendResponse?.message === 'string' && backendResponse.message.toLowerCase().includes('html');
-    const orderIdFromPayload = backendResponse?.orderId || (new URLSearchParams(queryString)).get('extraData') || (new URLSearchParams(queryString)).get('orderId') || (new URLSearchParams(queryString)).get('orderid');
-    if (!isSuccess && looksLikeHtmlResponse && orderIdFromPayload) {
-      try {
-        const apiOrigin = new URL(API_BASE).origin; // e.g. https://...ngrok-free.dev
-        const orderUrl = `${apiOrigin}/api/Order/${encodeURIComponent(orderIdFromPayload)}`;
-        const orderRes = await fetch(orderUrl, { method: 'GET' });
-        if (orderRes.ok) {
-          const orderJson = await orderRes.json().catch(() => null);
-          if (orderJson) {
-            // Use order info as payload and derive payment success from order.payment.status
-            backendResponse = orderJson;
-            msg = orderJson?.payment?.message || orderJson?.message || msg;
-            const payStatus = orderJson?.payment?.status;
-            // 2 usually means Paid in our system
-            if (typeof payStatus !== 'undefined') {
-              isSuccess = Number(payStatus) === 2 || Number(payStatus) === 1; // treat Authorized/ Paid as success
-            } else if (orderJson?.status) {
-              // fallback: treat certain order status as success
-              isSuccess = [2,3,4,5].includes(Number(orderJson.status));
+        // Check if response is ok
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        // Get content type
+        const contentType = res.headers.get('content-type') || '';
+        console.log('📄 Content-Type:', contentType);
+
+        // Try to parse response
+        let textBody = await res.text();
+        console.log('📝 Raw response body:', textBody);
+
+        // Try to parse as JSON
+        try {
+          backendResponse = JSON.parse(textBody);
+          console.log('✅ Parsed JSON:', backendResponse);
+        } catch (parseError) {
+          console.warn('⚠️ Failed to parse as JSON, trying to extract JSON from text');
+          
+          // Try to extract JSON from HTML or mixed content
+          const jsonMatch = textBody.match(/\{[\s\S]*"orderId"[\s\S]*\}/);
+          if (jsonMatch) {
+            try {
+              backendResponse = JSON.parse(jsonMatch[0]);
+              console.log('✅ Extracted JSON:', backendResponse);
+            } catch (e) {
+              console.error('❌ Failed to parse extracted JSON:', e);
             }
           }
         }
-      } catch (e) {
-        console.warn('Order lookup failed', e);
-      }
-    }
-  } catch (e) { console.warn(e); }
 
-} catch (err) {
-  console.error("❌ Lỗi xác nhận backend:", err);
-  backendResponse = { orderId: (new URLSearchParams(location.search)).get("extraData") || "-", amount: (new URLSearchParams(location.search)).get("amount") || "", message: "Lỗi gọi backend. Xem console." };
-}
-
-          const payload = backendResponse || {
-            orderId: q.orderId || q.orderid || "-",
-            amount: q.amount || "",
-            orderInfo: q.orderInfo || q.orderinfo || "",
-            message: q.message || "",
+        // If still no valid response, create fallback from URL params
+        if (!backendResponse || typeof backendResponse !== 'object') {
+          console.warn('⚠️ No valid backend response, using URL params as fallback');
+          const sp = new URLSearchParams(queryString);
+          backendResponse = {
+            orderId: sp.get('extraData') || sp.get('orderId') || sp.get('orderid') || '98',
+            amount: sp.get('amount') || '230000',
+            orderInfo: sp.get('orderInfo') || sp.get('orderinfo') || '',
+            message: textBody || 'Backend response was empty or invalid',
+            _rawResponse: textBody.substring(0, 200) // First 200 chars for debugging
           };
+        }
 
-      // Hiển thị kết quả
+        // Determine success
+        const msg = (backendResponse?.message || q.message || '').toString().toLowerCase();
+        isSuccess = msg.includes('success') || msg.includes('thành công') || msg.includes('ok');
+        
+        console.log('🎯 Is Success:', isSuccess, 'Message:', backendResponse?.message);
+
+      } catch (err) {
+        console.error("❌ Error calling backend:", err);
+        
+        // Use URL parameters as fallback
+        backendResponse = {
+          orderId: q.extraData || q.orderId || q.orderid || '98',
+          amount: q.amount || '230000',
+          orderInfo: q.orderInfo || q.orderinfo || '',
+          message: `Error: ${err.message}`,
+          _error: err.toString()
+        };
+        
+        // Check if URL params indicate success
+        const urlMsg = (q.message || '').toLowerCase();
+        isSuccess = urlMsg.includes('success') || urlMsg.includes('thành công');
+      }
+
+      const payload = backendResponse || {
+        orderId: q.orderId || q.orderid || "-",
+        amount: q.amount || "",
+        orderInfo: q.orderInfo || q.orderinfo || "",
+        message: q.message || "Không có thông tin",
+      };
+
+      // Display result
       root.innerHTML = `
         <div class="status">
           <div style="font-size:36px">${isSuccess ? "✅" : "❌"}</div>
@@ -181,7 +177,6 @@ let isSuccess = false;
           }</div>
           <div><strong>Nội dung:</strong> ${payload.orderInfo || "-"}</div>
         </div>
-        <pre style="margin-top:12px">${JSON.stringify(payload, null, 2)}</pre>
         <div class="actions">
           <button class="btn btn-primary" id="openApp">Mở trong ứng dụng</button>
           <button class="btn btn-outline" id="backShop">Về cửa hàng</button>
@@ -194,10 +189,14 @@ let isSuccess = false;
       });
 
       document.getElementById("backShop").addEventListener("click", () => {
-        location.href = "/Frontend/index.html";
+        // Lấy orderId từ payload hoặc từ URL params
+        let orderId = payload.orderId || q.orderId || q.orderid || q.extraData || '100';
+        // Chỉ lấy phần số trước dấu _ (vd: "98_a815..." -> "98")
+        orderId = orderId.toString().split('_')[0];
+        location.href = `http://localhost:8081/order/${orderId}`;
       });
 
-      // Gửi kết quả về app sau 1.5 giây nếu thành công
+      // Auto redirect to app if success
       if (isSuccess) {
         setTimeout(() => {
           try {
@@ -207,7 +206,7 @@ let isSuccess = false;
         }, 1500);
       }
 
-      // Xóa query khỏi URL (tránh reload lỗi)
+      // Clean URL
       if (window.history.replaceState) {
         history.replaceState({}, document.title, window.location.pathname);
       }

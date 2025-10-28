@@ -15,8 +15,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getFlowers } from '../../api/apiClient';
-import AIChatBubble from '../../components/AIChatBubble';
+import { getFlowers } from "../../api/apiClient";
+import AIChatBubble from "../../components/AIChatBubble";
 import { useCart } from "../../contexts/CartContext";
 import { Flower } from "../../types/flower";
 
@@ -28,6 +28,7 @@ const COLORS = {
   bg: "#f6faf7",
   card: "#ffffff",
   border: "#e6eee9",
+  disabled: "#d0ddd5",
 };
 
 export default function ShopScreen() {
@@ -88,7 +89,7 @@ export default function ShopScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Header (copy từ home.tsx) */}
+      {/* Header */}
       <View style={styles.header}>
         <View style={{ width: 36 }} />
         <Text style={styles.brand}>Flowerfly</Text>
@@ -127,8 +128,10 @@ export default function ShopScreen() {
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={() =>
-              // cast to any to allow passing params object (expo-router strict types)
-              router.push({ pathname: '/product/[id]', params: { id: String(item.id) } } as any)
+              router.push({
+                pathname: "/product/[id]",
+                params: { id: String(item.id) },
+              } as any)
             }
             style={{ flex: 1 }}
           >
@@ -140,7 +143,7 @@ export default function ShopScreen() {
         contentContainerStyle={{ padding: 12, gap: 8 }}
         showsVerticalScrollIndicator={false}
       />
-      {/* AI chat bubble (floating) */}
+      {/* AI chat bubble */}
       <AIChatBubble flowers={data} />
 
       {/* ===== FILTER MODAL — UI ONLY (Price + Category) ===== */}
@@ -256,6 +259,34 @@ function ProductCard({ item }: { item: Flower }) {
   );
 
   const validImage = item.imageUrl?.startsWith("http");
+  const isOutOfStock = item.stock === 0;
+
+  const handleAddToCart = () => {
+    if (isOutOfStock) {
+      Alert.alert(
+        "Out of Stock",
+        `${item.name} is currently out of stock. Please check back later.`,
+        [{ text: "OK" }]
+      );
+      return;
+    }
+
+    addToCart(
+      { productId: String(item.id), name: item.name, price: item.price },
+      1
+    );
+    Alert.alert(
+      "Added to cart",
+      `${item.name} has been added to your cart.`,
+      [
+        {
+          text: "View cart",
+          onPress: () => router.push({ pathname: "/(tabs)/cart" } as any),
+        },
+        { text: "Continue", style: "cancel" },
+      ]
+    );
+  };
 
   return (
     <View style={styles.card}>
@@ -274,21 +305,18 @@ function ProductCard({ item }: { item: Flower }) {
           {item.description}
         </Text>
         <Text style={styles.price}>{priceText}</Text>
+        <Text style={[styles.stock, isOutOfStock && styles.outOfStock]}>
+          {isOutOfStock ? "Out of stock" : `Stock: ${item.stock}`}
+        </Text>
+
         <TouchableOpacity
-          style={styles.addBtn}
-          onPress={() => {
-            addToCart({ productId: String(item.id), name: item.name, price: item.price }, 1);
-            Alert.alert(
-              'Added to cart',
-              `${item.name} has been added to your cart.`,
-              [
-                { text: 'View cart', onPress: () => router.push({ pathname: '/(tabs)/cart' } as any) },
-                { text: 'Continue', style: 'cancel' },
-              ]
-            );
-          }}
+          style={[styles.addBtn, isOutOfStock && styles.addBtnDisabled]}
+          onPress={handleAddToCart}
+          disabled={isOutOfStock}
         >
-          <Text style={styles.addText}>Add to cart</Text>
+          <Text style={[styles.addText, isOutOfStock && styles.addTextDisabled]}>
+            {isOutOfStock ? "Out of stock" : "Add to cart"}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -310,7 +338,6 @@ const CATEGORY_OPTIONS = [
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.bg },
 
-  // Header y nguyên home.tsx
   header: {
     paddingHorizontal: 14,
     paddingBottom: 6,
@@ -331,13 +358,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  headerIcon: {
-    width: 20,
-    height: 20,
-    tintColor: COLORS.dark,
-  },
+  headerIcon: { width: 20, height: 20, tintColor: COLORS.dark },
 
-  // Search y nguyên home.tsx
   searchRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -366,11 +388,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  filterIcon: {
-    width: 18,
-    height: 18,
-    tintColor: COLORS.card,
-  },
+  filterIcon: { width: 18, height: 18, tintColor: COLORS.card },
 
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   retryBtn: {
@@ -380,6 +398,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   retryText: { color: "#fff", fontWeight: "600" },
+
   card: {
     flex: 1,
     backgroundColor: COLORS.card,
@@ -397,12 +416,18 @@ const styles = StyleSheet.create({
   name: { color: COLORS.text, fontWeight: "700", fontSize: 14 },
   desc: { color: COLORS.sub, fontSize: 12, marginTop: 2 },
   price: { color: COLORS.dark, fontWeight: "800", marginTop: 8 },
+  stock: { color: COLORS.sub, fontSize: 12, marginTop: 2 },
+  outOfStock: { color: "#e74c3c", fontWeight: "600" },
+
   addBtn: {
     marginTop: 10,
     backgroundColor: COLORS.primary,
     paddingVertical: 8,
     borderRadius: 20,
     alignItems: "center",
+  },
+  addBtnDisabled: {
+    backgroundColor: COLORS.disabled,
   },
   addText: { color: "#fff", fontWeight: "700" },
 

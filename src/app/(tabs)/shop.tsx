@@ -26,6 +26,7 @@ const COLORS = {
   bg: "#f6faf7",
   card: "#ffffff",
   border: "#e6eee9",
+  disabled: "#d0ddd5",
 };
 
 export default function ShopScreen() {
@@ -147,6 +148,34 @@ function ProductCard({ item }: { item: Flower }) {
   );
 
   const validImage = item.imageUrl?.startsWith("http");
+  const isOutOfStock = item.stock === 0;
+
+  const handleAddToCart = () => {
+    if (isOutOfStock) {
+      Alert.alert(
+        "Out of Stock",
+        `${item.name} is currently out of stock. Please check back later.`,
+        [{ text: "OK" }]
+      );
+      return;
+    }
+
+    addToCart(
+      { productId: String(item.id), name: item.name, price: item.price },
+      1
+    );
+    Alert.alert(
+      "Added to cart",
+      `${item.name} has been added to your cart.`,
+      [
+        {
+          text: "View cart",
+          onPress: () => router.push({ pathname: "/(tabs)/cart" } as any),
+        },
+        { text: "Continue", style: "cancel" },
+      ]
+    );
+  };
 
   return (
     <View style={styles.card}>
@@ -165,30 +194,18 @@ function ProductCard({ item }: { item: Flower }) {
           {item.description}
         </Text>
         <Text style={styles.price}>{priceText}</Text>
-        <Text style={styles.stock}>Stock: {item.stock}</Text>
+        <Text style={[styles.stock, isOutOfStock && styles.outOfStock]}>
+          {isOutOfStock ? "Out of stock" : `Stock: ${item.stock}`}
+        </Text>
 
         <TouchableOpacity
-          style={styles.addBtn}
-          onPress={() => {
-            addToCart(
-              { productId: String(item.id), name: item.name, price: item.price },
-              1
-            );
-            Alert.alert(
-              "Added to cart",
-              `${item.name} has been added to your cart.`,
-              [
-                {
-                  text: "View cart",
-                  onPress: () =>
-                    router.push({ pathname: "/(tabs)/cart" } as any),
-                },
-                { text: "Continue", style: "cancel" },
-              ]
-            );
-          }}
+          style={[styles.addBtn, isOutOfStock && styles.addBtnDisabled]}
+          onPress={handleAddToCart}
+          disabled={isOutOfStock}
         >
-          <Text style={styles.addText}>Add to cart</Text>
+          <Text style={[styles.addText, isOutOfStock && styles.addTextDisabled]}>
+            {isOutOfStock ? "Out of stock" : "Add to cart"}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -277,6 +294,7 @@ const styles = StyleSheet.create({
   desc: { color: COLORS.sub, fontSize: 12, marginTop: 2 },
   price: { color: COLORS.dark, fontWeight: "800", marginTop: 8 },
   stock: { color: COLORS.sub, fontSize: 12, marginTop: 2 },
+  outOfStock: { color: "#e74c3c", fontWeight: "600" },
 
   addBtn: {
     marginTop: 10,
@@ -285,5 +303,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
   },
+  addBtnDisabled: {
+    backgroundColor: COLORS.disabled,
+  },
   addText: { color: "#fff", fontWeight: "700" },
+  addTextDisabled: { color: "#8fa89c" },
 });

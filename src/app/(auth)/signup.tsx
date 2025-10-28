@@ -1,8 +1,9 @@
 import { useFonts } from "expo-font";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   ImageBackground,
   KeyboardAvoidingView,
   Platform,
@@ -14,6 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { handleRegister } from "../../controllers/userController"; // <<< ADD
 
 /* BACKGROUND */
 const bg = require("../../assets/background.png");
@@ -21,6 +23,7 @@ const bg = require("../../assets/background.png");
 const pacificoFont = require("../../assets/fonts/Pacifico-Regular.ttf");
 
 export default function SignUp() {
+  const router = useRouter(); // <<< ADD
   const [fontsLoaded] = useFonts({ Pacifico: pacificoFont });
 
   const [firstName, setFirstName] = useState("");
@@ -28,6 +31,28 @@ export default function SignUp() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [loading, setLoading] = useState(false); // <<< ADD
+
+  const onSignup = async () => {                 // <<< ADD
+    if (!email || !password) {
+      Alert.alert("Missing info", "Please enter email and password");
+      return;
+    }
+    if (password !== confirm) {
+      Alert.alert("Password mismatch", "Please confirm your password");
+      return;
+    }
+    try {
+      setLoading(true);
+      await handleRegister({ email, password, firstName, lastName });
+      Alert.alert("Success", "Registration successful");
+      router.replace("/(tabs)/home");
+    } catch (err: any) {
+      Alert.alert("Sign up failed", err?.message || "Unable to register");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!fontsLoaded) return <ActivityIndicator style={{ flex: 1 }} />;
 
@@ -89,8 +114,9 @@ export default function SignUp() {
                 secureTextEntry
               />
 
-              <TouchableOpacity style={styles.primaryButton} activeOpacity={0.85}>
-                <Text style={styles.primaryButtonText}>Sign up</Text>
+              {/* CALL REGISTER HERE */}
+              <TouchableOpacity style={styles.primaryButton} activeOpacity={0.85} onPress={onSignup} disabled={loading}>
+                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Sign up</Text>}
               </TouchableOpacity>
 
               <View style={styles.orWrap}>

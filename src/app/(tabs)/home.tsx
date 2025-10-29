@@ -31,30 +31,12 @@ export type Product = { id: string | number; name: string; price: number; image:
 export type Category = { id: string | number; name: string; image: string; };
 
 const BANNERS: string[] = [
-  "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=1600",
-  "https://images.unsplash.com/photo-1493340775710-2f33f4f6f56b?q=80&w=1600&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1491002052546-bf38f186af2e?q=80&w=1600&auto=format&fit=crop",
+  "https://plus.unsplash.com/premium_photo-1677005708723-c0dabb815e4b?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=387",
+  "https://plus.unsplash.com/premium_photo-1661292066962-48e5815dc7ce?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=870",
+  "https://images.unsplash.com/photo-1589244159943-460088ed5c92?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=890",
 ];
 
-const CATEGORIES: Category[] = [
-  { id: 1, name: "for Wedding", image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=400" },
-  { id: 2, name: "Flowers in box", image: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=400" },
-  { id: 3, name: "for Birthday", image: "https://images.unsplash.com/photo-1504198266285-165a3c76e0d3?w=400" },
-  { id: 4, name: "Roses", image: "https://images.unsplash.com/photo-1509043759401-136742328bb3?w=400" },
-  { id: 5, name: "Tulips", image: "https://images.unsplash.com/photo-1464965911892-8a99f4a06e0b?w=400" },
-];
 
-const TRENDING: Product[] = [
-  { id: 1, name: "101 red roses", price: 150, image: "https://images.unsplash.com/photo-1509043759401-136742328bb3?w=600" },
-  { id: 2, name: 'Bouquet "Autumn"', price: 150, image: "https://images.unsplash.com/photo-1477414348463-c0eb7f1359b6?w=600" },
-  { id: 3, name: 'Classic "Pastel"', price: 150, image: "https://images.unsplash.com/photo-1447877085163-3cce903855cd?w=600" },
-];
-
-const HALLOWEEN: Product[] = [
-  { id: 11, name: 'Bouquet "Monster"', price: 150, image: "https://images.unsplash.com/photo-1500937386664-56f3d8b1a3a1?w=600" },
-  { id: 12, name: 'Box "trick or treat"', price: 150, image: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600" },
-  { id: 13, name: 'Classic "Pastel"', price: 150, image: "https://images.unsplash.com/photo-1457089328109-e5d9bd499191?w=600" },
-];
 
 const { width } = Dimensions.get("window");
 
@@ -371,14 +353,14 @@ function HomeFlowerCard({ item }: { item: Flower }) {
 
 // category mock (copied from shop)
 const CATEGORY_OPTIONS = [
-  { id: 1, name: "Roses", image: "https://images.unsplash.com/photo-1509043759401-136742328bb3?w=400" },
-  { id: 5, name: "Orchids", image: "https://images.unsplash.com/photo-1468824357306-a439d58ccb1c?w=400" },
-  { id: 2, name: "Tulips", image: "https://images.unsplash.com/photo-1464965911892-8a99f4a06e0b?w=400" },
-  { id: 4, name: "Lilies", image: "https://images.unsplash.com/photo-1504198266285-165a3c76e0d3?w=400" },
-  { id: 6, name: "Sunflowers", image: "https://images.unsplash.com/photo-1502989642968-94fbdc9eace4?w=400" },
-  { id: 7, name: "Carnations", image: "https://images.unsplash.com/photo-1544551763-7ef4200b69c3?w=400" },
-  { id: 8, name: "Mixed", image: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=400" },
-  { id: 3, name: "Daisies", image: "https://images.unsplash.com/photo-1520975937573-5f7f4f0b4c04?w=400" },
+  { id: 1, name: "Roses", image: "https://images.unsplash.com/photo-1578439231583-9eca0a363860?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=387" },
+  { id: 5, name: "Orchids", image: "https://images.unsplash.com/photo-1605996370592-b6f7a81e382e?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=435" },
+  { id: 2, name: "Tulips", image: "https://plus.unsplash.com/premium_photo-1661427503852-5e2700754174?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1170" },
+  { id: 4, name: "Lilies", image: "https://images.unsplash.com/photo-1561897519-6e4fbd1fbc41?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=687" },
+  { id: 6, name: "Sunflowers", image: "https://images.unsplash.com/photo-1597848212624-a19eb35e2651?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=735" },
+  { id: 7, name: "Carnations", image: "https://images.unsplash.com/photo-1617265178200-facb3f9d8f37?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=687" },
+  { id: 8, name: "Mixed", image: "https://plus.unsplash.com/premium_photo-1677005250683-f42e33b64d8f?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=687" },
+  { id: 3, name: "Daisies", image: "https://plus.unsplash.com/premium_photo-1667867937010-77fd5161cf8d?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1173" },
 ];
 
 const styles = StyleSheet.create({

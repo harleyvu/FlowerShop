@@ -352,14 +352,14 @@ function ProductCard({ item }: { item: Flower }) {
 
 // +++ Category mock for UI
 const CATEGORY_OPTIONS = [
-  { id: 1, name: "Roses", image: "https://images.unsplash.com/photo-1509043759401-136742328bb3?w=200" },
-  { id: 5, name: "Orchids", image: "https://images.unsplash.com/photo-1468824357306-a439d58ccb1c?w=200" },
-  { id: 2, name: "Tulips", image: "https://images.unsplash.com/photo-1464965911892-8a99f4a06e0b?w=200" },
-  { id: 4, name: "Lilies", image: "https://images.unsplash.com/photo-1504198266285-165a3c76e0d3?w=200" },
-  { id: 6, name: "Sunflowers", image: "https://images.unsplash.com/photo-1502989642968-94fbdc9eace4?w=200" },
-  { id: 7, name: "Carnations", image: "https://images.unsplash.com/photo-1544551763-7ef4200b69c3?w=200" },
-  { id: 8, name: "Mixed", image: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=200" },
-  { id: 3, name: "Daisies", image: "https://images.unsplash.com/photo-1520975937573-5f7f4f0b4c04?w=200" },
+  { id: 1, name: "Roses", image: "https://images.unsplash.com/photo-1578439231583-9eca0a363860?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=387" },
+    { id: 5, name: "Orchids", image: "https://images.unsplash.com/photo-1605996370592-b6f7a81e382e?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=435" },
+    { id: 2, name: "Tulips", image: "https://plus.unsplash.com/premium_photo-1661427503852-5e2700754174?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1170" },
+    { id: 4, name: "Lilies", image: "https://images.unsplash.com/photo-1561897519-6e4fbd1fbc41?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=687" },
+    { id: 6, name: "Sunflowers", image: "https://images.unsplash.com/photo-1597848212624-a19eb35e2651?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=735" },
+    { id: 7, name: "Carnations", image: "https://images.unsplash.com/photo-1617265178200-facb3f9d8f37?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=687" },
+    { id: 8, name: "Mixed", image: "https://plus.unsplash.com/premium_photo-1677005250683-f42e33b64d8f?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=687" },
+    { id: 3, name: "Daisies", image: "https://plus.unsplash.com/premium_photo-1667867937010-77fd5161cf8d?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1173" },
 ];
 
 const styles = StyleSheet.create({

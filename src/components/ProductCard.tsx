@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useCart } from '../contexts/CartContext';
+import { useFavorites } from '../contexts/FavoritesContext';
 
 type ProductCardProps = {
   product: any;
@@ -10,18 +11,20 @@ type ProductCardProps = {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
+  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
   const router = useRouter();
   const [qty, setQty] = useState(1);
 
   const imageUri = product.image || product.imageUrl || product.photo || '';
   const price = product.price ?? product.cost ?? 0;
-  const pid = String(product.id ?? product.productId ?? '');
+  const pid = String(product.id ?? product.productId ?? product._id ?? '');
+  const isProductFavorited = isFavorite(pid);
 
   function handleAdd() {
-    addToCart({ productId: pid, name: product.name, price }, qty);
+    addToCart({ productId: pid, name: product.name, price, stock: product.stock }, qty);
     setQty(1);
     // show action to view checkout or continue
-    Alert.alert('Added to cart', `${product.name} has added to cartỏ`, [
+    Alert.alert('Added to cart', `${product.name} has added to cart`, [
       { text: 'Continue buy', style: 'cancel' },
       { text: 'Look at the cart', onPress: () => router.push({ pathname: '/cart' } as any) },
     ]);
@@ -30,8 +33,21 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <View style={styles.card}>
       {imageUri ? <Image source={{ uri: imageUri }} style={styles.image} /> : null}
-      <TouchableOpacity style={styles.favoriteButton}>
-        <Ionicons name="heart-outline" size={20} color="#1f7a4c" />
+      <TouchableOpacity 
+        style={[styles.favoriteButton, isProductFavorited && styles.favoriteButtonActive]}
+        onPress={() => {
+          if (isProductFavorited) {
+            removeFromFavorites(pid);
+          } else {
+            addToFavorites(product);
+          }
+        }}
+      >
+        <Ionicons 
+          name={isProductFavorited ? "heart" : "heart-outline"} 
+          size={20} 
+          color={isProductFavorited ? "#ff4d4d" : "#1f7a4c"} 
+        />
       </TouchableOpacity>
 
       <View style={styles.info}>
@@ -40,7 +56,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           <Text style={styles.ratingText}>4.89</Text>
         </View>
         <Text style={styles.name} numberOfLines={1}>{product.name}</Text>
-        <Text style={styles.price}>$ {price}</Text>
+        <Text style={styles.price}>{price} VND</Text>
 
         <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
           <TouchableOpacity style={styles.counterBtn} onPress={() => setQty(q => Math.max(1, q - 1))}>
@@ -55,7 +71,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
           <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
             <Text style={styles.addButtonText}>Add to cart</Text>
-            <Ionicons name="cart-outline" size={16} color="#fff" />
+            
           </TouchableOpacity>
         </View>
       </View>
@@ -88,6 +104,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
     padding: 6,
     borderRadius: 15,
+  },
+  favoriteButtonActive: {
+    backgroundColor: 'rgba(255, 77, 77, 0.1)',
   },
   info: {
     padding: 12,

@@ -1,4 +1,5 @@
-import React from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
   ImageBackground,
   SafeAreaView,
@@ -8,7 +9,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { clearAuthToken } from "../../api/apiClient";
+import { useCart } from "../../contexts/CartContext";
+import { restoreUser } from "../../controllers/userController";
 
 const COLORS = {
   primary: "#27c16b",
@@ -22,11 +25,26 @@ const COLORS = {
 
 export default function AccountScreen() {
   const router = useRouter();
+  const { clearCart } = useCart();
+  const [user, setUser] = useState<any | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      const loadUser = async () => {
+        const currentUser = await restoreUser();
+        setUser(currentUser);
+      };
+      loadUser();
+    }, [])
+  );
 
   const onMyOrders = () => router.push({ pathname: "/(tabs)/orders" } as any);
-  const onSignOut = () => {
-    // TODO: call sign out logic (clear token, context, navigate to auth)
-    router.replace("/login");
+
+  const onSignOut = async () => {
+    await clearAuthToken();
+    clearCart();
+    // You might want to clear other user-related async storage here
+    router.replace("/(auth)/login");
   };
 
   return (
@@ -47,7 +65,7 @@ export default function AccountScreen() {
           </View>
           <View style={styles.greeting}>
             <Text style={styles.hello}>Hello,</Text>
-            <Text style={styles.name}>Sofia!</Text>
+            <Text style={styles.name}>{user?.userName || "Guest"}</Text>
           </View>
         </View>
 

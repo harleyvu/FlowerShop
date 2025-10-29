@@ -1,6 +1,6 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { Platform } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Flower } from "../types/flower";
 
 const ENV_BASE = process.env.EXPO_PUBLIC_API_BASE_URL?.replace(/\/+$/, "");
@@ -13,25 +13,41 @@ export const apiClient = axios.create({
   timeout: 15000,
 });
 
+// ADD: Token helpers exported so other modules can call them
 const TOKEN_KEY = "AUTH_TOKEN";
 
-export async function setAuthToken(token: string | null) {
-  if (token) {
+export async function setAuthToken(token: string) {
+  try {
     await AsyncStorage.setItem(TOKEN_KEY, token);
-    apiClient.defaults.headers.common.Authorization = `Bearer ${token}`;
-  } else {
-    await AsyncStorage.removeItem(TOKEN_KEY);
-    delete apiClient.defaults.headers.common.Authorization;
+    apiClient.defaults.headers = apiClient.defaults.headers ?? {};
+    apiClient.defaults.headers.Authorization = `Bearer ${token}`;
+  } catch {
+    // ignore storage errors
   }
 }
 
-// khởi động: gắn token nếu có
-(async () => {
+export async function restoreAuthToken(): Promise<string | null> {
   try {
-    const t = await AsyncStorage.getItem(TOKEN_KEY);
-    if (t) apiClient.defaults.headers.common.Authorization = `Bearer ${t}`;
-  } catch {}
-})();
+    const token = await AsyncStorage.getItem(TOKEN_KEY);
+    if (token) {
+      apiClient.defaults.headers = apiClient.defaults.headers ?? {};
+      apiClient.defaults.headers.Authorization = `Bearer ${token}`;
+      return token;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export async function clearAuthToken() {
+  try {
+    await AsyncStorage.removeItem(TOKEN_KEY);
+    if (apiClient.defaults.headers) delete apiClient.defaults.headers.Authorization;
+  } catch {
+    // ignore
+  }
+}
 
 // Sample API dùng ở Shop
 export async function getFlowers(signal?: AbortSignal): Promise<Flower[]> {

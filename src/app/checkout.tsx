@@ -148,7 +148,7 @@ export default function CheckoutScreen() {
             <Text style={{ flex: 1 }}>
               {item.name} × {item.quantity}
             </Text>
-            <Text>{item.price * item.quantity} VND</Text>
+            <Text>{(item.price * item.quantity).toLocaleString('vi-VN')} VND</Text>
           </View>
         )}
         ListEmptyComponent={
@@ -158,7 +158,7 @@ export default function CheckoutScreen() {
           <>
             <View style={styles.summary}>
               <Text style={styles.totalText}>Total:</Text>
-              <Text style={styles.totalValue}>{total} VND</Text>
+              <Text style={styles.totalValue}>{total.toLocaleString('vi-VN')} VND</Text>
             </View>
             <TouchableOpacity
               style={styles.checkoutBtn}

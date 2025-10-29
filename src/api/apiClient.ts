@@ -63,3 +63,8 @@ export async function getFlowersByCategory(category: number, signal?: AbortSigna
   });
   return res.data;
 }
+
+export async function getFlowerById(id: string | number, signal?: AbortSignal): Promise<Flower> {
+  const res = await apiClient.get<Flower>(`/api/Flower/${id}`, { signal });
+  return res.data;
+}

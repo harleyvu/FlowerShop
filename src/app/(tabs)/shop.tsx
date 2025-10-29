@@ -38,6 +38,9 @@ export default function ShopScreen() {
   const [q, setQ] = useState("");
   const router = useRouter();
 
+  // +++ State for debounced search query
+  const [debouncedQuery, setDebouncedQuery] = useState(q);
+
   // +++ Filter UI states
   const [showFilter, setShowFilter] = useState(false);
   const [uiPriceIndex, setUiPriceIndex] = useState(3);
@@ -48,6 +51,28 @@ export default function ShopScreen() {
   useEffect(() => {
     if (params?.openFilter) setShowFilter(true);
   }, [params?.openFilter]);
+
+  // +++ Debounce search input
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(q);
+    }, 300); // 300ms delay
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [q]);
+
+  // +++ Filter data based on debounced search query
+  const filteredData = useMemo(() => {
+    const query = debouncedQuery.trim().toLowerCase();
+    if (!query) {
+      return data; // Return all if search is empty
+    }
+    return data.filter((flower) =>
+      flower.name.toLowerCase().includes(query)
+    );
+  }, [data, debouncedQuery]);
 
   // Unified loader: if category provided -> call getFlowersByCategory
   const load = async (category?: number | null, signal?: AbortSignal) => {
@@ -170,7 +195,7 @@ export default function ShopScreen() {
 
       {/* Product Grid */}
       <FlatList
-        data={data}
+        data={filteredData}
         keyExtractor={(it) => String(it.id)}
         renderItem={({ item }) => (
           <TouchableOpacity
@@ -192,7 +217,7 @@ export default function ShopScreen() {
         showsVerticalScrollIndicator={false}
       />
       {/* AI chat bubble */}
-      <AIChatBubble flowers={data} />
+      <AIChatBubble flowers={filteredData} />
 
       {/* ===== FILTER MODAL — UI ONLY (Price + Category) ===== */}
       <Modal visible={showFilter} animationType="slide" onRequestClose={() => setShowFilter(false)}>

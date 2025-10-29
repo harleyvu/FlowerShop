@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getFlowerById } from '../../api/apiClient';
 import { useCart } from '../../contexts/CartContext';
+import type { Flower } from '../../types/flower';
 
 const COLORS = {
   primary: '#27c16b',
@@ -17,19 +19,63 @@ const COLORS = {
 
 export default function ProductDetail() {
   const router = useRouter();
-  const { id, name, description, price, imageUrl } = useLocalSearchParams<{
-    id: string; name: string; description: string; price: string; imageUrl?: string;
-  }>();
-
+  const { id } = useLocalSearchParams<{ id: string }>();
   const { addToCart } = useCart();
 
+  const [product, setProduct] = useState<Flower | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [qty, setQty] = useState(1);
-  const priceText = useMemo(() => {
-    const p = Number(price ?? 0);
-    return `${p.toLocaleString('en-US')} VND`;
-  }, [price]);
 
-  const hasImage = imageUrl && imageUrl.startsWith('http');
+  useEffect(() => {
+    if (!id) {
+      setError("Product ID is missing.");
+      setLoading(false);
+      return;
+    }
+
+    const ac = new AbortController();
+    const loadProduct = async () => {
+      try {
+        setLoading(true);
+        const data = await getFlowerById(id, ac.signal);
+        setProduct(data);
+      } catch (err: any) {
+        setError(err.message || "Failed to load product details.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProduct();
+    return () => ac.abort();
+  }, [id]);
+
+  const priceText = useMemo(() => {
+    const p = product?.price ?? 0;
+    return `${p.toLocaleString('en-US')} VND`;
+  }, [product]);
+
+  const hasImage = product?.imageUrl && product.imageUrl.startsWith('http');
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.center}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <SafeAreaView style={styles.center}>
+        <Text style={{ color: 'red', marginBottom: 12 }}>{error || "Product not found."}</Text>
+        <TouchableOpacity onPress={() => router.back()} style={styles.addBtn}>
+          <Text style={styles.addText}>Go Back</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.bg }}>
@@ -46,7 +92,7 @@ export default function ProductDetail() {
         {/* Image */}
         <View style={{ alignItems: 'center', marginTop: 6 }}>
           {hasImage ? (
-            <Image source={{ uri: imageUrl }} style={styles.image} />
+            <Image source={{ uri: product.imageUrl }} style={styles.image} />
           ) : (
             <View style={[styles.image, styles.imagePlaceholder]}>
               <Text style={{ color: COLORS.sub }}>No image</Text>
@@ -56,10 +102,10 @@ export default function ProductDetail() {
 
         {/* Info card */}
         <View style={styles.card}>
-          <Text style={styles.title} numberOfLines={2}>{name || 'No name'}</Text>
+          <Text style={styles.title} numberOfLines={2}>{product.name || 'No name'}</Text>
 
           <Text style={styles.sectionLabel}>Composition:</Text>
-          <Text style={styles.desc} numberOfLines={4}>{description || 'Updating...'}</Text>
+          <Text style={styles.desc} numberOfLines={4}>{product.description || 'Updating...'}</Text>
 
           <View style={styles.qtyRow}>
             <TouchableOpacity style={styles.qtyBtn} onPress={() => setQty(q => Math.max(1, q - 1))}>
@@ -74,11 +120,10 @@ export default function ProductDetail() {
           <Text style={styles.price}>{priceText}</Text>
 
           <TouchableOpacity style={styles.addBtn} onPress={() => {
-            const pid = String(id ?? '');
-            addToCart({ productId: pid, name: name ?? 'Product', price: Number(price ?? 0) }, qty);
-            Alert.alert('Added to cart', `${name ?? 'Product'} has been added to your cart`, [
+            addToCart({ productId: String(product.id), name: product.name, price: product.price }, qty);
+            Alert.alert('Added to cart', `${product.name} has been added to your cart`, [
               { text: 'Continue shopping', style: 'cancel' },
-              { text: 'View cart', onPress: () => router.push({ pathname: '/cart' } as any) },
+              { text: 'View cart', onPress: () => router.push({ pathname: '/(tabs)/cart' } as any) },
             ]);
           }}>
             <Text style={styles.addText}>Add to cart</Text>
@@ -90,6 +135,7 @@ export default function ProductDetail() {
 }
 
 const styles = StyleSheet.create({
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.bg },
   header: { paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   brand: { fontSize: 24, color: COLORS.dark, fontFamily: 'Pacifico-Regular' },
   image: { width: 240, height: 200, resizeMode: 'contain' },

@@ -68,10 +68,20 @@ export default function CheckoutScreen() {
 
     try {
       setLoading(true);
-      await orderApi.createOrder(orderBody, token ?? undefined);
+      const newOrder = await orderApi.createOrder(orderBody, token ?? undefined);
       clearCart();
       Alert.alert("Success", "Your order has been created successfully.");
-      router.back();
+
+      if (newOrder && newOrder.id) {
+        // Chuyển đến trang chi tiết đơn hàng vừa tạo
+        router.replace({
+          pathname: "/order/[id]",
+          params: { id: String(newOrder.id) },
+        });
+      } else {
+        // Fallback nếu API không trả về id
+        router.back();
+      }
     } catch (err: any) {
       Alert.alert("Error", err?.message || "Unable to create order.");
     } finally {
@@ -148,7 +158,7 @@ export default function CheckoutScreen() {
             <Text style={{ flex: 1 }}>
               {item.name} × {item.quantity}
             </Text>
-            <Text>{item.price * item.quantity} VND</Text>
+            <Text>{(item.price * item.quantity).toLocaleString('vi-VN')} VND</Text>
           </View>
         )}
         ListEmptyComponent={
@@ -158,7 +168,7 @@ export default function CheckoutScreen() {
           <>
             <View style={styles.summary}>
               <Text style={styles.totalText}>Total:</Text>
-              <Text style={styles.totalValue}>{total} VND</Text>
+              <Text style={styles.totalValue}>{total.toLocaleString('vi-VN')} VND</Text>
             </View>
             <TouchableOpacity
               style={styles.checkoutBtn}

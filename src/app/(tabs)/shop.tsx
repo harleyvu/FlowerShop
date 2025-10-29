@@ -15,8 +15,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getFlowers } from "../../api/apiClient";
-import AIChatBubble from "../../components/AIChatBubble";
+import { getFlowers, getFlowersByCategory } from "../../api/apiClient";
+import AIChatBubble from '../../components/AIChatBubble';
 import { useCart } from "../../contexts/CartContext";
 import { useFavorites } from "../../contexts/FavoritesContext";
 import { Flower } from "../../types/flower";
@@ -40,22 +40,54 @@ export default function ShopScreen() {
   const [q, setQ] = useState("");
   const router = useRouter();
 
+  // +++ State for debounced search query
+  const [debouncedQuery, setDebouncedQuery] = useState(q);
+
   // +++ Filter UI states
   const [showFilter, setShowFilter] = useState(false);
-  const [uiPriceIndex, setUiPriceIndex] = useState(3);     // 0..3 (min -> max)
   const [uiCategory, setUiCategory] = useState<number | null>(null);
 
-  // +++ Nhận param để auto mở modal
-  const { openFilter } = useLocalSearchParams<{ openFilter?: string }>();
+  // +++ Nhận params từ route: category (sẽ load filtered) và openFilter
+  const params = useLocalSearchParams<{ category?: string; openFilter?: string }>();
   useEffect(() => {
-    if (openFilter) setShowFilter(true);
-  }, [openFilter]);
+    if (params?.openFilter) setShowFilter(true);
+  }, [params?.openFilter]);
 
-  const load = async (signal?: AbortSignal) => {
+  // +++ Debounce search input
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(q);
+    }, 300); // 300ms delay
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [q]);
+
+  // +++ Filter data based on debounced search query
+  const filteredData = useMemo(() => {
+    const query = debouncedQuery.trim().toLowerCase();
+    if (!query) {
+      return data; // Return all if search is empty
+    }
+    return data.filter((flower) =>
+      flower.name.toLowerCase().includes(query)
+    );
+  }, [data, debouncedQuery]);
+
+  // Unified loader: if category provided -> call getFlowersByCategory
+  const load = async (category?: number | null, signal?: AbortSignal) => {
     try {
       setError(null);
       setLoading(true);
-      const flowers = await getFlowers(signal);
+      let flowers: Flower[] = [];
+      if (typeof category === "number" && !isNaN(category)) {
+        flowers = await getFlowersByCategory(category, signal);
+        setUiCategory(category);
+      } else {
+        flowers = await getFlowers(signal);
+        setUiCategory(null);
+      }
       setData(flowers);
     } catch (e: any) {
       setError(e?.message ?? "Failed to load products");
@@ -66,9 +98,10 @@ export default function ShopScreen() {
 
   useEffect(() => {
     const ac = new AbortController();
-    load(ac.signal);
+    const catParam = params?.category ? Number(params.category) : null;
+    load(catParam, ac.signal);
     return () => ac.abort();
-  }, []);
+  }, [params?.category]);
 
   if (loading) {
     return (
@@ -88,6 +121,44 @@ export default function ShopScreen() {
       </View>
     );
   }
+
+  // ADD: Apply -> call API filtered by category; Reset -> reload all
+  const applyFilter = async () => {
+    try {
+      setShowFilter(false);
+      setLoading(true);
+      setError(null);
+      const ac = new AbortController();
+
+      let flowers;
+      if (uiCategory != null) {
+        flowers = await getFlowersByCategory(uiCategory, ac.signal);
+      } else {
+        flowers = await getFlowers(ac.signal);
+      }
+      setData(flowers);
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to load products");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetFilter = async () => {
+    setUiCategory(null);
+    try {
+      setShowFilter(false);
+      setLoading(true);
+      setError(null);
+      const ac = new AbortController();
+      const flowers = await getFlowers(ac.signal);
+      setData(flowers);
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to load products");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -124,7 +195,7 @@ export default function ShopScreen() {
 
       {/* Product Grid */}
       <FlatList
-        data={data}
+        data={filteredData}
         keyExtractor={(it) => String(it.id)}
         renderItem={({ item }) => (
           <TouchableOpacity
@@ -146,65 +217,21 @@ export default function ShopScreen() {
         showsVerticalScrollIndicator={false}
       />
       {/* AI chat bubble */}
-      <AIChatBubble flowers={data} />
+      <AIChatBubble flowers={filteredData} />
 
       {/* ===== FILTER MODAL — UI ONLY (Price + Category) ===== */}
       <Modal visible={showFilter} animationType="slide" onRequestClose={() => setShowFilter(false)}>
         <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.bg }}>
-          {/* Modal header */}
-          <View style={styles.fHeader}>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => setShowFilter(false)}>
-              <Ionicons name="arrow-back" size={20} color={COLORS.dark} />
-            </TouchableOpacity>
-            <Text style={styles.brand}>Flowerfly</Text>
+          {/* Modal header — only close button */}
+          <View style={styles.modalCloseHeader}>
+            <View style={{ flex: 1 }} />
             <TouchableOpacity style={styles.iconBtn} onPress={() => setShowFilter(false)}>
               <Ionicons name="close" size={20} color={COLORS.dark} />
             </TouchableOpacity>
           </View>
 
-          {/* Search row (chỉ giao diện) */}
-          <View style={styles.searchRow}>
-            <View style={styles.searchBox}>
-              <Ionicons name="search" size={18} color="#7c9b8f" />
-              <Text style={[styles.searchInput, { color: "#7c9b8f" }]}>Search</Text>
-            </View>
-            <View style={styles.filterBtn}>
-              <Image source={require("../../assets/filter.png")} style={styles.filterIcon} />
-            </View>
-          </View>
-
           <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
             <Text style={styles.sortBy}>Sort By</Text>
-
-            {/* Price */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeaderRow}>
-                <View style={styles.dotGreen} />
-                <Text style={styles.sectionTitle}>Price</Text>
-              </View>
-
-              {/* Fake histogram + track + knob (UI only) */}
-              <View style={styles.histogramRow}>
-                {[14, 26, 38, 30, 44].map((h, i) => (
-                  <View key={i} style={[styles.bar, { height: h }]} />
-                ))}
-                <View style={styles.track} />
-                <View style={[styles.knob, { left: `${uiPriceIndex * 33.33}%` }]} />
-              </View>
-
-              {/* Steps */}
-              <View style={styles.chipsRow}>
-                {["15$", "50$", "150$", "1000$"].map((t, i) => (
-                  <TouchableOpacity
-                    key={t}
-                    onPress={() => setUiPriceIndex(i)}
-                    style={[styles.chip, uiPriceIndex === i && styles.chipActive]}
-                  >
-                    <Text style={[styles.chipText, uiPriceIndex === i && styles.chipTextActive]}>{t}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
 
             {/* Category */}
             <View style={styles.section}>
@@ -235,13 +262,13 @@ export default function ShopScreen() {
           <View style={styles.footerActions}>
             <TouchableOpacity
               style={[styles.footerBtn, { backgroundColor: "#eaf6ef" }]}
-              onPress={() => { setUiCategory(null); setUiPriceIndex(3); }}
+              onPress={resetFilter}
             >
               <Text style={[styles.footerText, { color: COLORS.primary }]}>Reset</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.footerBtn, { backgroundColor: COLORS.primary }]}
-              onPress={() => setShowFilter(false)}
+              onPress={applyFilter}
             >
               <Text style={[styles.footerText, { color: "#fff" }]}>Apply</Text>
             </TouchableOpacity>
@@ -497,17 +524,6 @@ const styles = StyleSheet.create({
   dotGreen: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.primary },
   sectionTitle: { fontWeight: "800", color: COLORS.text },
 
-  histogramRow: { position: "relative", height: 50, marginVertical: 8, flexDirection: "row", alignItems: "flex-end", gap: 6 },
-  bar: { width: 22, backgroundColor: "#dff2e7", borderTopLeftRadius: 4, borderTopRightRadius: 4 },
-  track: { position: "absolute", left: 0, right: 0, bottom: 2, height: 4, backgroundColor: "#cde8da", borderRadius: 2 },
-  knob: { position: "absolute", bottom: -4, width: 16, height: 16, borderRadius: 8, backgroundColor: COLORS.primary, transform: [{ translateX: -8 }] },
-
-  chipsRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 6 },
-  chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bg },
-  chipActive: { borderColor: COLORS.primary, backgroundColor: "#e9f5ef" },
-  chipText: { color: COLORS.sub, fontWeight: "600" },
-  chipTextActive: { color: COLORS.dark },
-
   catGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   catItem: { width: 74, alignItems: "center", padding: 8, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.card },
   catItemActive: { borderColor: COLORS.primary, backgroundColor: "#e9f5ef" },
@@ -517,4 +533,13 @@ const styles = StyleSheet.create({
   footerActions: { flexDirection: "row", gap: 10, padding: 14, backgroundColor: COLORS.bg, borderTopWidth: 1, borderTopColor: COLORS.border },
   footerBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: "center" },
   footerText: { fontWeight: "700" },
+
+  // modal close header (right aligned X)
+  modalCloseHeader: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+  },
 });

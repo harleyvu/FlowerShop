@@ -113,14 +113,14 @@ export default function CartScreen() {
             <Text style={{ flex: 1 }}>
               {it.name} x {it.quantity}
             </Text>
-            <Text>{it.price * it.quantity} VND</Text>
+            <Text>{(it.price * it.quantity).toLocaleString('vi-VN')} VND</Text>
           </View>
         ))}
 
         <View style={styles.divider} />
         <View style={styles.priceRow}>
           <Text>Subtotal</Text>
-          <Text>{total} VND</Text>
+          <Text>{total.toLocaleString('vi-VN')} VND</Text>
         </View>
         <View style={styles.priceRow}>
           <Text>Delivery</Text>
@@ -130,7 +130,7 @@ export default function CartScreen() {
           style={[styles.priceRow, { marginTop: 8, alignItems: 'center' }]}
         >
           <Text style={{ fontWeight: '700', fontSize: 18 }}>Total</Text>
-          <Text style={{ fontWeight: '700', fontSize: 18 }}>{total} VND</Text>
+          <Text style={{ fontWeight: '700', fontSize: 18 }}>{total.toLocaleString('vi-VN')} VND</Text>
         </View>
 
         <TouchableOpacity style={styles.checkoutBtn} onPress={handleCheckout}>

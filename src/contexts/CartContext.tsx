@@ -6,13 +6,17 @@ export type CartItem = {
   name: string;
   price: number;
   quantity: number;
+  // optional stock information (when known)
+  stock?: number;
 };
 
 type CartContextValue = {
   items: CartItem[];
-  addToCart: (item: Omit<CartItem, 'quantity'>, qty?: number) => void;
+  // returns true when operation succeeded, false when rejected due to stock
+  addToCart: (item: Omit<CartItem, 'quantity'> & { stock?: number }, qty?: number) => boolean;
   removeFromCart: (productId: string) => void;
-  updateQty: (productId: string, qty: number) => void;
+  // returns true when update succeeded, false when rejected due to stock
+  updateQty: (productId: string, qty: number) => boolean;
   clearCart: () => void;
   total: number;
 };
@@ -38,20 +42,43 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     AsyncStorage.setItem(KEY, JSON.stringify(items)).catch(() => {});
   }, [items]);
 
-  const addToCart = (item: Omit<CartItem, 'quantity'>, qty = 1) => {
+  const addToCart = (item: Omit<CartItem, 'quantity'> & { stock?: number }, qty = 1) => {
+    let ok = true;
     setItems(prev => {
       const found = prev.find(p => p.productId === item.productId);
+      // determine stock to use: prefer existing stored stock, otherwise passed item.stock
+      const knownStock = found?.stock ?? item.stock;
       if (found) {
-        return prev.map(p => p.productId === item.productId ? { ...p, quantity: p.quantity + qty } : p);
+        const newQty = found.quantity + qty;
+        if (typeof knownStock === 'number' && newQty > knownStock) {
+          ok = false; // reject
+          return prev;
+        }
+        return prev.map(p => p.productId === item.productId ? { ...p, quantity: p.quantity + qty, stock: knownStock } : p);
       }
-      return [...prev, { ...item, quantity: qty }];
+      if (typeof knownStock === 'number' && qty > knownStock) {
+        ok = false;
+        return prev;
+      }
+      return [...prev, { ...item, quantity: qty, stock: item.stock }];
     });
+    return ok;
   };
 
   const removeFromCart = (productId: string) => setItems(prev => prev.filter(p => p.productId !== productId));
 
-  const updateQty = (productId: string, qty: number) =>
-    setItems(prev => prev.map(p => p.productId === productId ? { ...p, quantity: qty } : p));
+  const updateQty = (productId: string, qty: number) => {
+    let ok = true;
+    setItems(prev => prev.map(p => {
+      if (p.productId !== productId) return p;
+      if (typeof p.stock === 'number' && qty > p.stock) {
+        ok = false;
+        return p;
+      }
+      return { ...p, quantity: qty };
+    }));
+    return ok;
+  };
 
   const clearCart = () => setItems([]);
 

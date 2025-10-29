@@ -18,6 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { getFlowers, getFlowersByCategory } from "../../api/apiClient";
 import AIChatBubble from '../../components/AIChatBubble';
 import { useCart } from "../../contexts/CartContext";
+import { useFavorites } from "../../contexts/FavoritesContext";
 import { Flower } from "../../types/flower";
 
 const COLORS = {
@@ -29,6 +30,7 @@ const COLORS = {
   card: "#ffffff",
   border: "#e6eee9",
   disabled: "#d0ddd5",
+  favorite: "#e74c3c",
 };
 
 export default function ShopScreen() {
@@ -279,6 +281,7 @@ export default function ShopScreen() {
 
 function ProductCard({ item }: { item: Flower }) {
   const { addToCart } = useCart();
+  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
   const router = useRouter();
   const priceText = useMemo(
     () => `${item.price.toLocaleString("vi-VN")} VND`,
@@ -287,6 +290,8 @@ function ProductCard({ item }: { item: Flower }) {
 
   const validImage = item.imageUrl?.startsWith("http");
   const isOutOfStock = item.stock === 0;
+  const flowerId = String(item.id);
+  const favorite = isFavorite(flowerId);
 
   const handleAddToCart = () => {
     if (isOutOfStock) {
@@ -299,7 +304,7 @@ function ProductCard({ item }: { item: Flower }) {
     }
 
     addToCart(
-      { productId: String(item.id), name: item.name, price: item.price },
+      { productId: String(item.id), name: item.name, price: item.price, stock: item.stock },
       1
     );
     Alert.alert(
@@ -315,8 +320,37 @@ function ProductCard({ item }: { item: Flower }) {
     );
   };
 
+  const handleToggleFavorite = (e: any) => {
+    e.stopPropagation();
+    if (favorite) {
+      removeFromFavorites(flowerId);
+    } else {
+      addToFavorites({
+        id: flowerId,
+        name: item.name,
+        price: item.price,
+        stock: item.stock,
+        image: item.imageUrl,
+        category: item.category,
+      });
+    }
+  };
+
   return (
     <View style={styles.card}>
+      {/* Favorite Button */}
+      <TouchableOpacity
+        style={styles.favoriteBtn}
+        onPress={handleToggleFavorite}
+        activeOpacity={0.7}
+      >
+        <Ionicons
+          name={favorite ? "heart" : "heart-outline"}
+          size={22}
+          color={favorite ? COLORS.favorite : COLORS.sub}
+        />
+      </TouchableOpacity>
+
       {validImage ? (
         <Image source={{ uri: item.imageUrl }} style={styles.image} />
       ) : (
@@ -433,6 +467,24 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderWidth: 1,
     borderColor: COLORS.border,
+    position: "relative",
+  },
+  favoriteBtn: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    zIndex: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   image: { width: "100%", height: 120 },
   imagePlaceholder: {

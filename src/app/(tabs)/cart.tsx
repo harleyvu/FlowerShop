@@ -68,7 +68,7 @@ export default function CartScreen() {
           <View style={styles.row}>
             <View style={{ flex: 1 }}>
               <Text style={styles.itemName}>{item.name}</Text>
-              <Text style={styles.itemMeta}>Available in stock</Text>
+              <Text style={styles.itemMeta}>{typeof item.stock === 'number' ? `Available in stock: ${item.stock}` : 'Available in stock'}</Text>
             </View>
             <View style={{ alignItems: 'center' }}>
               <TouchableOpacity
@@ -90,7 +90,13 @@ export default function CartScreen() {
                 <Text style={{ marginHorizontal: 8 }}>{item.quantity}</Text>
                 <TouchableOpacity
                   style={styles.qtyBtn}
-                  onPress={() => updateQty(item.productId, item.quantity + 1)}
+                  onPress={() => {
+                    // attempt update; updateQty now returns boolean
+                    const success = updateQty(item.productId, item.quantity + 1);
+                    if (!success) {
+                      Alert.alert('Stock limit', `Cannot add more than available stock (${item.stock}).`);
+                    }
+                  }}
                 >
                   <Text>+</Text>
                 </TouchableOpacity>

@@ -71,7 +71,7 @@ Customer's first message: "${input}"
 Remember: Greet in English first, then continue in ${detectedLanguage}.`;
     } else {
       // Subsequent messages: Respond in the detected language
-      prompt = `You are a friendly flower shop assistant.
+  prompt = `You are a friendly flower shop assistant.
 
 Available flowers:
 ${flowersText}
@@ -80,6 +80,7 @@ Chat history:
 ${historyText}
 
 IMPORTANT INSTRUCTIONS:
+0. Do NOT start your response with a greeting (e.g., "Hello", "Hi", "Chào bạn"). Greetings should ONLY be used in the assistant's very first message in a conversation.
 1. Respond in ${detectedLanguage} (the same language the customer is using)
 2. Suggest 1-2 suitable flowers with prices when appropriate
 3. Keep responses friendly, concise, and helpful

@@ -43,7 +43,6 @@ export default function ShopScreen() {
 
   // +++ Filter UI states
   const [showFilter, setShowFilter] = useState(false);
-  const [uiPriceIndex, setUiPriceIndex] = useState(3);
   const [uiCategory, setUiCategory] = useState<number | null>(null);
 
   // +++ Nhận params từ route: category (sẽ load filtered) và openFilter
@@ -145,7 +144,6 @@ export default function ShopScreen() {
 
   const resetFilter = async () => {
     setUiCategory(null);
-    setUiPriceIndex(3);
     try {
       setShowFilter(false);
       setLoading(true);
@@ -232,36 +230,6 @@ export default function ShopScreen() {
 
           <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
             <Text style={styles.sortBy}>Sort By</Text>
-
-            {/* Price */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeaderRow}>
-                <View style={styles.dotGreen} />
-                <Text style={styles.sectionTitle}>Price</Text>
-              </View>
-
-              {/* Fake histogram + track + knob (UI only) */}
-              <View style={styles.histogramRow}>
-                {[14, 26, 38, 30, 44].map((h, i) => (
-                  <View key={i} style={[styles.bar, { height: h }]} />
-                ))}
-                <View style={styles.track} />
-                <View style={[styles.knob, { left: `${uiPriceIndex * 33.33}%` }]} />
-              </View>
-
-              {/* Steps */}
-              <View style={styles.chipsRow}>
-                {["15$", "50$", "150$", "1000$"].map((t, i) => (
-                  <TouchableOpacity
-                    key={t}
-                    onPress={() => setUiPriceIndex(i)}
-                    style={[styles.chip, uiPriceIndex === i && styles.chipActive]}
-                  >
-                    <Text style={[styles.chipText, uiPriceIndex === i && styles.chipTextActive]}>{t}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
 
             {/* Category */}
             <View style={styles.section}>
@@ -503,17 +471,6 @@ const styles = StyleSheet.create({
   sectionHeaderRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
   dotGreen: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.primary },
   sectionTitle: { fontWeight: "800", color: COLORS.text },
-
-  histogramRow: { position: "relative", height: 50, marginVertical: 8, flexDirection: "row", alignItems: "flex-end", gap: 6 },
-  bar: { width: 22, backgroundColor: "#dff2e7", borderTopLeftRadius: 4, borderTopRightRadius: 4 },
-  track: { position: "absolute", left: 0, right: 0, bottom: 2, height: 4, backgroundColor: "#cde8da", borderRadius: 2 },
-  knob: { position: "absolute", bottom: -4, width: 16, height: 16, borderRadius: 8, backgroundColor: COLORS.primary, transform: [{ translateX: -8 }] },
-
-  chipsRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 6 },
-  chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bg },
-  chipActive: { borderColor: COLORS.primary, backgroundColor: "#e9f5ef" },
-  chipText: { color: COLORS.sub, fontWeight: "600" },
-  chipTextActive: { color: COLORS.dark },
 
   catGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   catItem: { width: 74, alignItems: "center", padding: 8, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.card },

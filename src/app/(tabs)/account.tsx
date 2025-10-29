@@ -1,5 +1,13 @@
 import React from "react";
-import { SafeAreaView, View, Text, TouchableOpacity, StyleSheet, StatusBar } from "react-native";
+import {
+  ImageBackground,
+  SafeAreaView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useRouter } from "expo-router";
 
 const COLORS = {
@@ -16,55 +24,54 @@ export default function AccountScreen() {
   const router = useRouter();
 
   const onMyOrders = () => router.push({ pathname: "/(tabs)/orders" } as any);
-  const onSettings = () => router.push("/settings");
-  const onAbout = () => router.push("/about");
   const onSignOut = () => {
     // TODO: call sign out logic (clear token, context, navigate to auth)
     router.replace("/login");
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
-      <View style={styles.header}>
-        <Text style={styles.logo}>Flowerfly</Text>
-      </View>
-
-      <View style={styles.profileSection}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarIcon}>👤</Text>
+    <ImageBackground
+      source={require("../../assets/background.png")}
+      style={styles.container}
+      resizeMode="cover"
+    >
+      <SafeAreaView style={styles.safe}>
+        <StatusBar barStyle="dark-content" backgroundColor="transparent" />
+        <View style={styles.header}>
+          <Text style={styles.logo}>Flowerfly</Text>
         </View>
-        <View style={styles.greeting}>
-          <Text style={styles.hello}>Hello,</Text>
-          <Text style={styles.name}>Sofia!</Text>
+
+        <View style={styles.profileSection}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarIcon}>👤</Text>
+          </View>
+          <View style={styles.greeting}>
+            <Text style={styles.hello}>Hello,</Text>
+            <Text style={styles.name}>Sofia!</Text>
+          </View>
         </View>
-      </View>
 
-      <View style={styles.card}>
-        <TouchableOpacity style={styles.button} onPress={onMyOrders} activeOpacity={0.85}>
-          <Text style={styles.buttonText}>My orders</Text>
-        </TouchableOpacity>
+        <View style={styles.card}>
+          <TouchableOpacity style={styles.button} onPress={onMyOrders} activeOpacity={0.85}>
+            <Text style={styles.buttonText}>My orders</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={onSettings} activeOpacity={0.85}>
-          <Text style={styles.buttonText}>Settings</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.button} onPress={onSignOut} activeOpacity={0.85}>
-          <Text style={[styles.buttonText, { color: "#b33" }]}>Sign out</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={[styles.button, styles.lastButton]} onPress={onAbout} activeOpacity={0.85}>
-          <Text style={styles.buttonText}>About us</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+          <TouchableOpacity style={[styles.button, styles.lastButton]} onPress={onSignOut} activeOpacity={0.85}>
+            <Text style={[styles.buttonText, { color: "#b33" }]}>Sign out</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   safe: {
     flex: 1,
-    backgroundColor: COLORS.bg,
+    backgroundColor: "transparent", // Make safe area transparent
   },
   header: {
     paddingTop: 18,
@@ -72,10 +79,9 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   logo: {
-    fontSize: 28,
-    color: COLORS.primary,
-    fontWeight: "700",
-    fontFamily: undefined,
+    fontSize: 32,
+    color: COLORS.dark,
+    fontFamily: "Pacifico-Regular", // Use custom font
   },
   profileSection: {
     alignItems: "center",
@@ -86,7 +92,7 @@ const styles = StyleSheet.create({
     width: 110,
     height: 110,
     borderRadius: 56,
-    backgroundColor: COLORS.card,
+    backgroundColor: "rgba(255, 255, 255, 0.8)", // Slightly transparent white
     borderWidth: 2,
     borderColor: COLORS.border,
     alignItems: "center",
@@ -105,17 +111,18 @@ const styles = StyleSheet.create({
   hello: {
     fontSize: 20,
     color: COLORS.text,
+    fontWeight: "600",
   },
   name: {
     fontSize: 28,
-    color: COLORS.primary,
+    color: COLORS.dark,
     fontWeight: "700",
     marginTop: 4,
   },
   card: {
     marginHorizontal: 18,
     marginTop: 8,
-    backgroundColor: COLORS.card,
+    backgroundColor: "rgba(255, 255, 255, 0.9)", // Slightly transparent white
     borderRadius: 18,
     paddingVertical: 18,
     paddingHorizontal: 12,
